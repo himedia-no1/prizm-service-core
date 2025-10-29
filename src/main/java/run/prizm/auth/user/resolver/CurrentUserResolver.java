@@ -1,0 +1,58 @@
+package run.prizm.auth.user.resolver;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.MethodParameter;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
+import run.prizm.auth.common.constant.ErrorCode;
+import run.prizm.auth.common.constant.HttpConstants;
+import run.prizm.auth.common.constant.UserType;
+import run.prizm.auth.common.exception.AuthException;
+import run.prizm.auth.user.repository.UserRepository;
+
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+public class CurrentUserResolver implements HandlerMethodArgumentResolver {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public boolean supportsParameter(MethodParameter parameter) {
+        return parameter.hasParameterAnnotation(CurrentUser.class);
+    }
+
+    @Override
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        validateUserType(webRequest);
+        String uuidStr = extractHeaderValue(webRequest, HttpConstants.HEADER_USER_UUID.getValue(), ErrorCode.MISSING_USER_INFO);
+
+        try {
+            UUID uuid = UUID.fromString(uuidStr);
+            return userRepository.getActiveByUuidOrThrow(uuid);
+        } catch (IllegalArgumentException exception) {
+            throw new AuthException(ErrorCode.INVALID_USER_UUID);
+        }
+    }
+
+    private void validateUserType(NativeWebRequest webRequest) {
+        String userType = webRequest.getHeader(HttpConstants.HEADER_USER_TYPE.getValue());
+        if (!UserType.USER.getValue()
+                          .equals(userType)) {
+            throw new AuthException(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private String extractHeaderValue(NativeWebRequest webRequest, String headerName, ErrorCode errorCode) {
+        String value = webRequest.getHeader(headerName);
+        if (value == null || value.isEmpty()) {
+            throw new AuthException(errorCode);
+        }
+        return value;
+    }
+}

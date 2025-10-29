@@ -1,0 +1,83 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: auth
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET}
+            scope: read:user,user:email
+            redirect-uri: '{baseUrl}/auth/user/oauth2/github/callback'
+
+          gitlab:
+            client-id: ${OAUTH2_GITLAB_CLIENT_ID}
+            client-secret: ${OAUTH2_GITLAB_CLIENT_SECRET}
+            scope: openid,profile,email
+            client-name: gitlab
+            authorization-grant-type: authorization_code
+            redirect-uri: '{baseUrl}/auth/user/oauth2/gitlab/callback'
+
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+            scope: openid,profile,email
+            client-name: google
+            authorization-grant-type: authorization_code
+            redirect-uri: '{baseUrl}/auth/user/oauth2/google/callback'
+
+          microsoft:
+            client-id: ${OAUTH2_MICROSOFT_CLIENT_ID}
+            client-secret: ${OAUTH2_MICROSOFT_CLIENT_SECRET}
+            scope: openid,profile,email
+            client-name: microsoft
+            authorization-grant-type: authorization_code
+            redirect-uri: '{baseUrl}/auth/user/oauth2/microsoft/callback'
+
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+          gitlab:
+            issuer-uri: https://gitlab.com
+          microsoft:
+            authorization-uri: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+            token-uri: https://login.microsoftonline.com/common/oauth2/v2.0/token
+            jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+            user-info-uri: https://graph.microsoft.com/oidc/userinfo
+            user-name-attribute: sub
+
+prizm:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET}
+      access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
+      refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+    app:
+      frontend-user-url: ${APP_FRONTEND_USER_URL}
+      frontend-admin-url: ${APP_FRONTEND_ADMIN_URL}
+    cookie:
+      http-only: true
+      same-site: ${COOKIE_SAME_SITE}
+      max-age: ${COOKIE_MAX_AGE}
+      secure: false
+      domain: ${COOKIE_DOMAIN}
