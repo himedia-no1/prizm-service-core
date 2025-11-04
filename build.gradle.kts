@@ -6,7 +6,7 @@ plugins {
 
 group = "run.prizm"
 version = "1.0"
-description = "auth"
+description = "core"
 
 java {
     toolchain {
