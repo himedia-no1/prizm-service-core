@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: auth
+    name: core
 
   datasource:
     url: ${DB_URL}
