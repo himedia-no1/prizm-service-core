@@ -1,0 +1,75 @@
+name: CI/CD
+run-name: "[${{ github.ref_name }}] ${{ github.repository }}:${{ github.sha }}"
+
+on:
+  push:
+    branches: [ main, dev ]
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  CD:
+    runs-on: ubuntu-latest
+    needs: CI
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Update GitOps Manifests
+        run: |
+          cd gitops
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            DEPLOY_PATH="main"
+          else
+            DEPLOY_PATH="dev"
+          fi
+          sed -i "s|image:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" $DEPLOY_PATH/deployment.yaml
+
+      - name: Create Pull Request to GitOps Repository
+        uses: peter-evans/create-pull-request@v6
+        id: cpr
+        with:
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+          base: ${{ github.ref_name }}
+          branch: update/${{ github.ref_name }}/${{ github.repository }}/${{ github.sha }}
+          title: "[${{ github.ref_name }}] ${{ github.repository }}:${{ github.sha }}"
+          commit-message: "[${{ github.ref_name }}] ${{ github.repository }}:${{ github.sha }}"
+
+      - name: Auto-Merge Pull Request
+        if: ${{ github.ref_name == 'dev' && steps.cpr.outputs.pull-request-number }}
+        run: gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin --delete-branch=false
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_TOKEN }}
