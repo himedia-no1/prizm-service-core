@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import run.prizm.core.user.resolver.CurrentUserResolver;
-import run.prizm.core.admin.resolver.CurrentAdminResolver;
+import run.prizm.core.auth.security.resolver.CurrentUserResolver;
+import run.prizm.core.auth.security.resolver.CurrentAdminResolver;
 
 import java.util.List;
 

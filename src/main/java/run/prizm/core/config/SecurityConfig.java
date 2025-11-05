@@ -10,10 +10,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import run.prizm.core.common.constant.ApiEndpoint;
-import run.prizm.core.user.service.oauth2.CustomOAuth2UserService;
-import run.prizm.core.user.service.oauth2.OAuth2FailureHandler;
-import run.prizm.core.user.service.oauth2.OAuth2SuccessHandler;
+import run.prizm.core.auth.constant.ApiEndpoint;
+import run.prizm.core.auth.service.CustomOAuth2UserService;
+import run.prizm.core.auth.service.oauth2.OAuth2FailureHandler;
+import run.prizm.core.auth.service.oauth2.OAuth2SuccessHandler;
 
 @Configuration
 @EnableWebSecurity
