@@ -47,8 +47,8 @@ public class CurrentAuthResolver implements HandlerMethodArgumentResolver {
             throw new RuntimeException("Invalid token");
         }
 
-        UUID userUuid = UUID.fromString(subject);
-        User user = userRepository.findByUuid(userUuid)
+        Long userId = Long.parseLong(subject);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return user;

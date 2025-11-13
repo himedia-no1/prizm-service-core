@@ -33,14 +33,14 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .setSubject(user.getUuid().toString())
+                   .subject(user.getId().toString())
                    .claim("type", "user")
-                   .claim("email", user.getGlobalEmail())
-                   .claim("name", user.getGlobalName())
+                   .claim("email", user.getEmail())
+                   .claim("name", user.getName())
                    .claim("provider", user.getAuthProvider().name())
-                   .setIssuedAt(issuedAt)
-                   .setExpiration(expiration)
-                   .signWith(key, SignatureAlgorithm.HS256)
+                   .issuedAt(issuedAt)
+                   .expiration(expiration)
+                   .signWith(key)
                    .compact();
     }
 
@@ -52,11 +52,11 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .setSubject(user.getUuid().toString())
+                   .subject(user.getId().toString())
                    .claim("type", "user")
-                   .setIssuedAt(issuedAt)
-                   .setExpiration(expiration)
-                   .signWith(key, SignatureAlgorithm.HS256)
+                   .issuedAt(issuedAt)
+                   .expiration(expiration)
+                   .signWith(key)
                    .compact();
     }
 

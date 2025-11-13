@@ -1,74 +1,69 @@
 package run.prizm.core.auth.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.UpdateTimestamp;
+import run.prizm.core.common.id.UuidV7LongGenerator;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "uuidv7-long")
+    @SuppressWarnings("deprecation")
+    @GenericGenerator(
+            name = "uuidv7-long",
+            strategy = "run.prizm.core.common.id.UuidV7LongGenerator"
+    )
     private Long id;
 
-    @Column(nullable = false)
-    private UUID uuid;
-
-    @Column(nullable = false, columnDefinition = "user_auth_provider")
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false)
     private UserAuthProvider authProvider;
 
     @Column(nullable = false)
     private String openidSub;
 
-    @Column
     @Lob
-    private String profileImage;
+    private String profileImagePath;
 
-    @Column
-    private String globalName;
+    @Column(nullable = false)
+    private String name;
 
-    @Column
-    private String globalEmail;
+    @Column(nullable = false)
+    private String email;
 
-    @Column(nullable = false, insertable = false, updatable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Language language;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column
     private LocalDateTime deletedAt;
 
     @Builder
-    public User(UserAuthProvider authProvider, String openidSub, String profileImage, String globalName, String globalEmail) {
-        this.uuid = UUID.randomUUID();
+    public User(UserAuthProvider authProvider, String openidSub, String profileImagePath, String name, String email, Language language) {
         this.authProvider = authProvider;
         this.openidSub = openidSub;
-        this.profileImage = profileImage;
-        this.globalName = globalName;
-        this.globalEmail = globalEmail;
-    }
-
-    public void updateProfile(String globalName, String globalEmail) {
-        this.globalName = globalName;
-        this.globalEmail = globalEmail;
-    }
-
-    public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
+        this.profileImagePath = profileImagePath;
+        this.name = name;
+        this.email = email;
+        this.language = language;
     }
 }
