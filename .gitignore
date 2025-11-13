@@ -39,6 +39,7 @@ out/
 *.eslintcache
 
 venv/
+.venv/
 instance/
 .mypy_cache/
 .pytest_cache/
@@ -97,7 +98,7 @@ manifests/tmp/
 *.rdb
 
 .env
-.env.*
+.env
 *.secret
 *.credentials
 *.pem

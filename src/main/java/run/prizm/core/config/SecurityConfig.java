@@ -10,19 +10,21 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import run.prizm.core.auth.constant.ApiEndpoint;
-import run.prizm.core.auth.service.CustomOAuth2UserService;
-import run.prizm.core.auth.service.oauth2.OAuth2FailureHandler;
-import run.prizm.core.auth.service.oauth2.OAuth2SuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import run.prizm.core.security.filter.JwtAuthenticationFilter;
+import run.prizm.core.security.oauth2.CustomOAuth2UserService;
+import run.prizm.core.security.oauth2.OAuth2FailureHandler;
+import run.prizm.core.security.oauth2.OAuth2SuccessHandler;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOAuth2UserService oAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -31,26 +33,30 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(AbstractHttpConfigurer::disable)  // CORS는 API Gateway에서 처리
+        http.cors(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.anyRequest()
-                                               .permitAll())
-            .oauth2Login(this::configureOAuth2Login);
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/error").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login(this::configureOAuth2Login)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     private void configureOAuth2Login(org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer<HttpSecurity> oauth2) {
-        oauth2.loginPage(ApiEndpoint.USER_OAUTH2_LOGIN_PAGE.getPath())
+        oauth2.loginPage("/api/auth/oauth2")
               .authorizationEndpoint(authorization ->
-                      authorization.baseUri(ApiEndpoint.USER_OAUTH2_AUTHORIZATION_BASE.getPath()))
+                      authorization.baseUri("/api/auth/oauth2"))
               .redirectionEndpoint(redirection ->
-                      redirection.baseUri(ApiEndpoint.USER_OAUTH2_REDIRECT_PATTERN.getPath()))
+                      redirection.baseUri("/api/auth/oauth2/callback/*"))
               .userInfoEndpoint(userInfo ->
-                      userInfo.userService(customOAuth2UserService))
+                      userInfo.userService(oAuth2UserService))
               .successHandler(oAuth2SuccessHandler)
               .failureHandler(oAuth2FailureHandler);
     }
