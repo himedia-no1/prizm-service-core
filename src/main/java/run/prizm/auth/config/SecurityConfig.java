@@ -36,8 +36,8 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.anyRequest()
-                                               .permitAll())
+            .authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/files/upload").authenticated()
+                                               .anyRequest().permitAll())
             .oauth2Login(this::configureOAuth2Login);
 
         return http.build();

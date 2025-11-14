@@ -32,7 +32,13 @@ public enum ErrorCode {
 
     // OAuth2 errors
     OAUTH2_PROVIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "OAUTH001", "OAuth2 provider not found"),
-    UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "OAUTH002", "Unsupported OAuth2 provider");
+    UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "OAUTH002", "Unsupported OAuth2 provider"),
+
+    // File errors
+    FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE001", "File is empty"),
+    FILE_INVALID_NAME(HttpStatus.BAD_REQUEST, "FILE002", "File name is invalid"),
+    FILE_UNSUPPORTED_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "FILE003", "Unsupported file type"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE004", "File upload failed");
 
     private final HttpStatus status;
     private final String code;

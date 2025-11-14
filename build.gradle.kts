@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("io.minio:minio:8.5.2")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
