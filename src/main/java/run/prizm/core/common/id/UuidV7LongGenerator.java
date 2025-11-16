@@ -10,14 +10,18 @@ import java.util.UUID;
 
 public class UuidV7LongGenerator implements IdentifierGenerator {
 
-    @Override
-    public Serializable generate(SharedSessionContractImplementor session, Object obj) {
-        UUID uuid = UuidCreator.getTimeOrdered(); // UUIDv7 생성
+    public static long nextValue() {
+        UUID uuid = UuidCreator.getTimeOrdered();
         ByteBuffer buffer = ByteBuffer.allocate(16);
         buffer.putLong(uuid.getMostSignificantBits());
         buffer.putLong(uuid.getLeastSignificantBits());
         buffer.flip();
-        long id = buffer.getLong(); // 상위 64비트만 사용
-        return id < 0 ? -id : id; // 음수 방지 (양수만)
+        long id = buffer.getLong();
+        return id < 0 ? -id : id;
+    }
+
+    @Override
+    public Serializable generate(SharedSessionContractImplementor session, Object obj) {
+        return nextValue();
     }
 }

@@ -21,6 +21,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private static final String PUBLIC_INVITE_PATH = "/api/invite";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -30,13 +31,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtService.validateToken(token)) {
             Claims claims = jwtService.extractClaims(token);
-            
+
             if (claims != null && "user".equals(claims.get("type", String.class))) {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(claims, null, Collections.emptyList());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext()
+                                     .setAuthentication(authentication);
             }
         }
 
@@ -49,5 +51,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring("Bearer ".length());
         }
         return null;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return "GET".equalsIgnoreCase(request.getMethod()) &&
+               path.startsWith(PUBLIC_INVITE_PATH) &&
+               !path.endsWith("/join");
     }
 }

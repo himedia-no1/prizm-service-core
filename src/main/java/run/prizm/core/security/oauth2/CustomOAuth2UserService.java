@@ -8,9 +8,10 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import run.prizm.core.auth.entity.User;
-import run.prizm.core.auth.entity.UserAuthProvider;
-import run.prizm.core.auth.repository.UserRepository;
+import run.prizm.core.user.constraint.UserAuthProvider;
+import run.prizm.core.user.entity.User;
+import run.prizm.core.user.repository.UserRepository;
+import run.prizm.core.common.constraint.Language;
 import run.prizm.core.security.oauth2.extractor.OAuth2AttributeExtractor;
 
 import java.util.Collection;
@@ -29,108 +30,64 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        
+        String registrationId = userRequest.getClientRegistration()
+                                           .getRegistrationId();
         OAuth2AttributeExtractor extractor = findExtractor(registrationId);
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
-        
         User user = authenticateWithOAuth2(registrationId, userData);
-        
         return createOAuth2User(user, oAuth2User.getAttributes());
     }
 
     private OAuth2AttributeExtractor findExtractor(String provider) {
         return extractors.stream()
-                .filter(extractor -> extractor.supports(provider))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Unsupported OAuth provider"));
+                         .filter(extractor -> extractor.supports(provider))
+                         .findFirst()
+                         .orElseThrow(() -> new RuntimeException("Unsupported OAuth provider"));
     }
 
-        private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData) {
+    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData) {
+        UserAuthProvider userAuthProvider = UserAuthProvider.valueOf(registrationId.toUpperCase());
+        return userRepository.findByAuthProviderAndOpenidSub(userAuthProvider, userData.providerId())
+                             .map(user -> {
+                                 user.setName(userData.name());
+                                 user.setEmail(userData.email());
+                                 return userRepository.save(user);
+                             })
+                             .orElseGet(() -> {
+                                 User user = User.builder()
+                                                 .authProvider(userAuthProvider)
+                                                 .openidSub(userData.providerId())
+                                                 .image(null)
+                                                 .name(userData.name())
+                                                 .email(userData.email())
+                                                 .language(Language.EN)
+                                                 .active(true)
+                                                 .build();
+                                 return userRepository.save(user);
+                             });
+    }
 
-            UserAuthProvider authProvider = UserAuthProvider.valueOf(registrationId.toUpperCase());
+    private OAuth2User createOAuth2User(User user, Map<String, Object> attributes) {
+        return new OAuth2User() {
+            @Override
+            public Map<String, Object> getAttributes() {
+                return attributes;
+            }
 
-    
+            @Override
+            public Collection<? extends GrantedAuthority> getAuthorities() {
+                return Collections.emptyList();
+            }
 
-            return userRepository.findByAuthProviderAndOpenidSub(authProvider, userData.providerId())
+            @Override
+            public String getName() {
+                return user.getId()
+                           .toString();
+            }
 
-                    .map(user -> {
-
-                        user.setName(userData.name());
-
-                        user.setEmail(userData.email());
-
-                        return userRepository.save(user);
-
-                    })
-
-                    .orElseGet(() -> {
-
-                        User user = User.builder()
-
-                                .authProvider(authProvider)
-
-                                .openidSub(userData.providerId())
-
-                                .profileImagePath(userData.profileImage())
-
-                                .name(userData.name())
-
-                                .email(userData.email())
-
-                                .language(run.prizm.core.auth.entity.Language.EN)
-
-                                .build();
-
-                        return userRepository.save(user);
-
-                    });
-
-        }
-
-    
-
-        private OAuth2User createOAuth2User(User user, Map<String, Object> attributes) {
-
-            return new OAuth2User() {
-
-                @Override
-
-                public Map<String, Object> getAttributes() {
-
-                    return attributes;
-
-                }
-
-    
-
-                @Override
-
-                public Collection<? extends GrantedAuthority> getAuthorities() {
-
-                    return Collections.emptyList();
-
-                }
-
-    
-
-                @Override
-
-                public String getName() {
-
-                    return user.getId().toString();
-
-                }
-
-    
-
-                public User getUser() {
-
-                    return user;
-
-                }
-
-            };
-
-        }
+            public User getUser() {
+                return user;
+            }
+        };
+    }
 }

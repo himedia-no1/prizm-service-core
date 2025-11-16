@@ -3,11 +3,10 @@ package run.prizm.core.security.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import run.prizm.core.auth.entity.User;
+import run.prizm.core.user.entity.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -33,11 +32,13 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .subject(user.getId().toString())
+                   .subject(user.getId()
+                                .toString())
                    .claim("type", "user")
                    .claim("email", user.getEmail())
                    .claim("name", user.getName())
-                   .claim("provider", user.getAuthProvider().name())
+                   .claim("provider", user.getAuthProvider()
+                                          .name())
                    .issuedAt(issuedAt)
                    .expiration(expiration)
                    .signWith(key)
@@ -52,7 +53,8 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .subject(user.getId().toString())
+                   .subject(user.getId()
+                                .toString())
                    .claim("type", "user")
                    .issuedAt(issuedAt)
                    .expiration(expiration)

@@ -3,9 +3,10 @@ package run.prizm.core.security.cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-@Service
+@Component
 public class CookieService {
 
     @Value("${prizm.auth.jwt.refresh-token-expiration}")
@@ -64,10 +65,12 @@ public class CookieService {
             header.append("; Secure");
         }
         if (isNotEmpty(sameSite)) {
-            header.append("; SameSite=").append(sameSite);
+            header.append("; SameSite=")
+                  .append(sameSite);
         }
         if (isNotEmpty(domain)) {
-            header.append("; Domain=").append(domain);
+            header.append("; Domain=")
+                  .append(domain);
         }
     }
 
