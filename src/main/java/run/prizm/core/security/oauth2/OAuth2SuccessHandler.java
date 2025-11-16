@@ -14,6 +14,7 @@ import run.prizm.core.common.constraint.Language;
 import run.prizm.core.security.cookie.CookieService;
 import run.prizm.core.security.jwt.JwtService;
 import run.prizm.core.security.jwt.Token;
+import run.prizm.core.storage.redis.RefreshTokenCacheRepository;
 import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
 
@@ -28,6 +29,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final CookieService cookieService;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
+    private final RefreshTokenCacheRepository refreshTokenCacheRepository;
 
     @Value("${prizm.frontend.url:}")
     private String frontendUrl;
@@ -56,6 +58,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         long expiresIn = jwtService.getAccessTokenExpirationInSeconds();
         Token token = new Token(accessToken, refreshToken, expiresIn);
 
+        refreshTokenCacheRepository.save(refreshToken, user.getId());
         cookieService.setRefreshToken(response, token.refreshToken());
 
         String path = inviteCode != null && !inviteCode.isEmpty()
