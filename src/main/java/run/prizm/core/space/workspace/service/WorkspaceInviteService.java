@@ -223,7 +223,7 @@ public class WorkspaceInviteService {
                 .role(role)
                 .image(null)
                 .name(null)
-                .email(null)
+
                 .state(WorkspaceUserState.ONLINE)
                 .notify(WorkspaceUserNotify.ON)
                 .banned(false)

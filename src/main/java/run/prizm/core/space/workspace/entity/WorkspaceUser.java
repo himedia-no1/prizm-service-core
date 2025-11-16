@@ -42,8 +42,6 @@ public class WorkspaceUser {
 
     private String name;
 
-    private String email;
-
     private String phone;
 
     private String introduction;
@@ -71,14 +69,13 @@ public class WorkspaceUser {
 
     @Builder
     public WorkspaceUser(Workspace workspace, User user, WorkspaceUserRole role, File image,
-                         String name, String email, String phone, String introduction, WorkspaceUserState state,
+                         String name, String phone, String introduction, WorkspaceUserState state,
                          WorkspaceUserNotify notify, boolean banned) {
         this.workspace = workspace;
         this.user = user;
         this.role = role;
         this.image = image;
         this.name = name;
-        this.email = email;
         this.phone = phone;
         this.introduction = introduction;
         this.state = state;

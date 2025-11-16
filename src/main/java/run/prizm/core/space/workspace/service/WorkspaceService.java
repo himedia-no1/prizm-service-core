@@ -49,7 +49,7 @@ public class WorkspaceService {
                              .role(WorkspaceUserRole.OWNER)
                              .image(owner.getImage())
                              .name(null)
-                             .email(null)
+
                              .state(WorkspaceUserState.ONLINE)
                              .notify(WorkspaceUserNotify.ON)
                              .banned(false)

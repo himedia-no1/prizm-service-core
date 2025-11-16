@@ -96,10 +96,6 @@ public class WorkspaceUserService {
             workspaceUser.setName(request.name());
         }
 
-        if (request.email() != null) {
-            workspaceUser.setEmail(request.email());
-        }
-
         if (request.phone() != null) {
             workspaceUser.setPhone(request.phone());
         }

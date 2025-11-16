@@ -58,7 +58,6 @@ CREATE TABLE workspace_users (
     user_id      BIGINT      NOT NULL REFERENCES users (id),
     image_id     BIGINT      NULL REFERENCES files (id),
     name         TEXT        NULL,
-    email        TEXT        NULL,
     phone        TEXT        NULL,
     introduction TEXT        NULL,
     role         TEXT        NOT NULL,
