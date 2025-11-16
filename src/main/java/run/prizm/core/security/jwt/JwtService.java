@@ -34,32 +34,17 @@ public class JwtService {
         return Jwts.builder()
                    .subject(user.getId()
                                 .toString())
-                   .claim("type", "user")
-                   .claim("email", user.getEmail())
-                   .claim("name", user.getName())
                    .claim("provider", user.getAuthProvider()
                                           .name())
+                   .claim("email", user.getEmail())
                    .issuedAt(issuedAt)
                    .expiration(expiration)
                    .signWith(key)
                    .compact();
     }
 
-    public String generateRefreshToken(User user) {
-        long now = System.currentTimeMillis();
-        Date issuedAt = new Date(now);
-        Date expiration = new Date(now + refreshTokenExpiration);
-
-        SecretKey key = getSigningKey();
-
-        return Jwts.builder()
-                   .subject(user.getId()
-                                .toString())
-                   .claim("type", "user")
-                   .issuedAt(issuedAt)
-                   .expiration(expiration)
-                   .signWith(key)
-                   .compact();
+    public String generateRefreshToken() {
+        return java.util.UUID.randomUUID().toString().replace("-", "");
     }
 
     public long getAccessTokenExpirationInSeconds() {

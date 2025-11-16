@@ -35,6 +35,8 @@ dependencies {
     implementation("com.github.f4b6a3:uuid-creator:5.3.5")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    implementation("io.minio:minio:8.5.7")
+
     runtimeOnly("org.postgresql:postgresql")
 
     compileOnly("org.projectlombok:lombok")

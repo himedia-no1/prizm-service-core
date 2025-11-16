@@ -11,10 +11,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import run.prizm.core.security.filter.JwtAuthenticationFilter;
+import run.prizm.core.security.oauth2.CustomAuthorizationRequestResolver;
 import run.prizm.core.security.oauth2.CustomOAuth2UserService;
 import run.prizm.core.security.oauth2.OAuth2FailureHandler;
 import run.prizm.core.security.oauth2.OAuth2SuccessHandler;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +31,8 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
+    private final run.prizm.core.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -32,8 +40,22 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(AbstractHttpConfigurer::disable)
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
@@ -50,9 +72,11 @@ public class SecurityConfig {
     }
 
     private void configureOAuth2Login(org.springframework.security.config.annotation.web.configurers.oauth2.client.OAuth2LoginConfigurer<HttpSecurity> oauth2) {
-        oauth2.loginPage("/api/auth/oauth2")
-              .authorizationEndpoint(authorization ->
-                      authorization.baseUri("/api/auth/oauth2"))
+        oauth2.authorizationEndpoint(authorization ->
+                      authorization
+                              .baseUri("/api/auth/oauth2")
+                              .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                              .authorizationRequestResolver(customAuthorizationRequestResolver))
               .redirectionEndpoint(redirection ->
                       redirection.baseUri("/api/auth/oauth2/callback/*"))
               .userInfoEndpoint(userInfo ->

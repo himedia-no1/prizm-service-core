@@ -27,6 +27,9 @@ public class ChannelWorkspaceUser {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private WorkspaceUser workspaceUser;
 
+    @Column(nullable = false)
+    private boolean explicit;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChannelWorkspaceUserNotify notify;
@@ -36,9 +39,10 @@ public class ChannelWorkspaceUser {
     private Instant createdAt;
 
     @Builder
-    public ChannelWorkspaceUser(Channel channel, WorkspaceUser workspaceUser, ChannelWorkspaceUserNotify notify) {
+    public ChannelWorkspaceUser(Channel channel, WorkspaceUser workspaceUser, boolean explicit, ChannelWorkspaceUserNotify notify) {
         this.channel = channel;
         this.workspaceUser = workspaceUser;
+        this.explicit = explicit;
         this.notify = notify;
     }
 }

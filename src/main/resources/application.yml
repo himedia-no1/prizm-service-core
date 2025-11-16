@@ -5,12 +5,6 @@ spring:
   application:
     name: core
 
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: none
@@ -19,6 +13,18 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
   security:
     oauth2:
@@ -33,7 +39,7 @@ spring:
           google:
             client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
             client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
-            scope: openid,profile,email
+            scope: profile,email
             client-name: google
             authorization-grant-type: authorization_code
             redirect-uri: '{baseUrl}/api/auth/oauth2/callback/google'
@@ -46,10 +52,21 @@ prizm:
   auth:
     jwt:
       secret: ${JWT_SECRET}
-      access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
-      refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+      access-token-expiration: 600000
+      refresh-token-expiration: 604800000
     cookie:
       http-only: true
-      secure: true
-      same-site: ${COOKIE_SAME_SITE}
+      secure: ${COOKIE_SECURE}
+      same-site: lax
       domain: ${COOKIE_DOMAIN}
+  
+  frontend:
+    url: ${FRONTEND_URL}
+
+  minio:
+    host: ${MINIO_HOST}
+    port: ${MINIO_PORT}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket: ${MINIO_BUCKET}
+    public-url: ${MINIO_PUBLIC_URL:}

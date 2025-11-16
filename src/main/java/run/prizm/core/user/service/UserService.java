@@ -1,79 +1,88 @@
 package run.prizm.core.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import run.prizm.core.common.util.ImageUploadHelper;
+import run.prizm.core.file.entity.File;
 import run.prizm.core.user.repository.UserRepository;
 import run.prizm.core.common.constraint.Language;
+import run.prizm.core.user.dto.*;
 import run.prizm.core.user.entity.User;
-import run.prizm.core.file.entity.File;
-import run.prizm.core.file.repository.FileRepository;
-import run.prizm.core.security.jwt.JwtService;
-import run.prizm.core.security.jwt.Token;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final FileRepository fileRepository;
+    private final ImageUploadHelper imageUploadHelper;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
 
     @Transactional(readOnly = true)
-    public Token refreshAccessToken(String refreshToken) {
-        if (!jwtService.validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid token");
-        }
-
-        String type = jwtService.getTypeFromToken(refreshToken);
-        String subject = jwtService.getSubjectFromToken(refreshToken);
-
-        if (!"user".equals(type) || subject == null) {
-            throw new RuntimeException("Invalid token");
-        }
-
-        try {
-            Long userId = Long.parseLong(subject);
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            String accessToken = jwtService.generateAccessToken(user);
-            String newRefreshToken = jwtService.generateRefreshToken(user);
-            long expiresIn = jwtService.getAccessTokenExpirationInSeconds();
-            return new Token(accessToken, newRefreshToken, expiresIn);
-        } catch (NumberFormatException exception) {
-            throw new RuntimeException("Invalid token", exception);
-        }
-    }
-
-    @Transactional
-    public User updateUserProfile(Long userId, String name, String email, Long imageId, Language language) {
+    public UserProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setName(name);
-        user.setEmail(email);
-        if (imageId != null) {
-            File image = fileRepository.findById(imageId)
-                                       .orElseThrow(() -> new RuntimeException("Image not found"));
-            user.setImage(image);
-        } else {
-            user.setImage(null);
-        }
-        user.setLanguage(language);
+        String profileImage = imageUploadHelper.getImageUrl(user.getImage());
 
-        return userRepository.save(user);
+        return new UserProfileResponse(
+                profileImage,
+                user.getName(),
+                user.getEmail(),
+                user.getAuthProvider(),
+                user.getLanguage(),
+                user.getCreatedAt()
+        );
     }
 
     @Transactional
-    public void softDeleteUser(Long userId) {
+    public UserProfileResponse updateProfile(Long userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setDeletedAt(Instant.now());
+        if (request.profileImage() != null && !request.profileImage().isEmpty()) {
+            // 기존 이미지 삭제
+            if (user.getImage() != null) {
+                imageUploadHelper.deleteImage(user.getImage());
+            }
+            
+            // 새 이미지 업로드 및 저장
+            File newImage = imageUploadHelper.uploadImage(request.profileImage(), "profiles");
+            user.setImage(newImage);
+        }
+
+        if (request.name() != null) {
+            user.setName(request.name());
+        }
 
         userRepository.save(user);
+        return getProfile(userId);
+    }
+
+    @Transactional
+    public UserProfileResponse updateLanguage(Long userId, UserLanguageUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setLanguage(request.language());
+        userRepository.save(user);
+
+        return getProfile(userId);
+    }
+
+    public void saveLastPath(Long userId, UserLastPathRequest request) {
+        String key = LAST_PATH_KEY_PREFIX + userId;
+        redisTemplate.opsForValue().set(key, request.getPath());
+    }
+
+    public UserLastPathResponse getLastPath(Long userId) {
+        String key = LAST_PATH_KEY_PREFIX + userId;
+        String path = (String) redisTemplate.opsForValue().get(key);
+        return UserLastPathResponse.builder()
+                .path(path)
+                .build();
     }
 }

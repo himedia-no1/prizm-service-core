@@ -4,10 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import run.prizm.core.space.category.dto.CategoryCreateRequest;
+import run.prizm.core.space.category.dto.CategoryUpdateRequest;
+import run.prizm.core.space.category.dto.CategoryZIndexUpdateRequest;
 import run.prizm.core.space.category.entity.Category;
 import run.prizm.core.space.category.repository.CategoryRepository;
 import run.prizm.core.space.workspace.entity.Workspace;
 import run.prizm.core.space.workspace.repository.WorkspaceRepository;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +27,67 @@ public class CategoryService {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
+        BigDecimal zIndex = categoryRepository.findLastByWorkspaceId(workspaceId)
+                .map(lastCategory -> lastCategory.getZIndex().add(BigDecimal.ONE))
+                .orElse(BigDecimal.ONE);
+
         Category category = Category.builder()
                                     .workspace(workspace)
                                     .name(request.name())
-                                    .zIndex(0D)
+                                    .zIndex(zIndex)
                                     .build();
 
         return categoryRepository.save(category);
+    }
+
+    @Transactional
+    public Category updateCategory(Long categoryId, CategoryUpdateRequest request) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        if (request.name() != null) {
+            category.setName(request.name());
+        }
+
+        return categoryRepository.save(category);
+    }
+
+    @Transactional
+    public void updateZIndex(Long categoryId, CategoryZIndexUpdateRequest request) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        List<Category> categories = categoryRepository
+                .findByWorkspaceIdAndDeletedAtIsNullOrderByZIndex(category.getWorkspace().getId());
+
+        BigDecimal newZIndex;
+
+        if ("FIRST".equals(request.position())) {
+            Category firstCategory = categories.get(0);
+            newZIndex = firstCategory.getZIndex().divide(BigDecimal.valueOf(2));
+        } else if ("LAST".equals(request.position())) {
+            Category lastCategory = categories.get(categories.size() - 1);
+            newZIndex = lastCategory.getZIndex().add(BigDecimal.ONE);
+        } else if ("BETWEEN".equals(request.position())) {
+            Category beforeCategory = categoryRepository.findById(request.beforeId())
+                    .orElseThrow(() -> new RuntimeException("Before category not found"));
+            Category afterCategory = categoryRepository.findById(request.afterId())
+                    .orElseThrow(() -> new RuntimeException("After category not found"));
+            newZIndex = beforeCategory.getZIndex().add(afterCategory.getZIndex()).divide(BigDecimal.valueOf(2));
+        } else {
+            throw new RuntimeException("Invalid position");
+        }
+
+        category.setZIndex(newZIndex);
+        categoryRepository.save(category);
+    }
+
+    @Transactional
+    public void deleteCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        category.setDeletedAt(Instant.now());
+        categoryRepository.save(category);
     }
 }

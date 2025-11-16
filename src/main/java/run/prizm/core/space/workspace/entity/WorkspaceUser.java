@@ -46,6 +46,8 @@ public class WorkspaceUser {
 
     private String phone;
 
+    private String introduction;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private WorkspaceUserState state;
@@ -69,7 +71,7 @@ public class WorkspaceUser {
 
     @Builder
     public WorkspaceUser(Workspace workspace, User user, WorkspaceUserRole role, File image,
-                         String name, String email, String phone, WorkspaceUserState state,
+                         String name, String email, String phone, String introduction, WorkspaceUserState state,
                          WorkspaceUserNotify notify, boolean banned) {
         this.workspace = workspace;
         this.user = user;
@@ -78,6 +80,7 @@ public class WorkspaceUser {
         this.name = name;
         this.email = email;
         this.phone = phone;
+        this.introduction = introduction;
         this.state = state;
         this.notify = notify;
         this.banned = banned;

@@ -1,5 +1,6 @@
 package run.prizm.core.security.oauth2;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -8,11 +9,15 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import run.prizm.core.common.constraint.Language;
+import run.prizm.core.common.util.ImageUploadHelper;
+import run.prizm.core.file.entity.File;
+import run.prizm.core.security.oauth2.extractor.OAuth2AttributeExtractor;
 import run.prizm.core.user.constraint.UserAuthProvider;
 import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
-import run.prizm.core.common.constraint.Language;
-import run.prizm.core.security.oauth2.extractor.OAuth2AttributeExtractor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,16 +30,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final List<OAuth2AttributeExtractor> extractors;
     private final UserRepository userRepository;
+    private final ImageUploadHelper imageUploadHelper;
 
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        String registrationId = userRequest.getClientRegistration()
-                                           .getRegistrationId();
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
         OAuth2AttributeExtractor extractor = findExtractor(registrationId);
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
-        User user = authenticateWithOAuth2(registrationId, userData);
+        
+        String languageParam = getLanguageFromRequest();
+        
+        User user = authenticateWithOAuth2(registrationId, userData, languageParam);
         return createOAuth2User(user, oAuth2User.getAttributes());
     }
 
@@ -45,49 +53,66 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                          .orElseThrow(() -> new RuntimeException("Unsupported OAuth provider"));
     }
 
-    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData) {
+    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData, String languageParam) {
         UserAuthProvider userAuthProvider = UserAuthProvider.valueOf(registrationId.toUpperCase());
         return userRepository.findByAuthProviderAndOpenidSub(userAuthProvider, userData.providerId())
                              .map(user -> {
                                  user.setName(userData.name());
                                  user.setEmail(userData.email());
+                                 
+                                 if (languageParam != null) {
+                                     try {
+                                         Language newLanguage = Language.valueOf(languageParam.toUpperCase());
+                                         if (user.getLanguage() != newLanguage) {
+                                             user.setLanguage(newLanguage);
+                                         }
+                                     } catch (IllegalArgumentException ignored) {
+                                     }
+                                 }
+                                 
                                  return userRepository.save(user);
                              })
                              .orElseGet(() -> {
+                                 Language language = Language.EN;
+                                 if (languageParam != null) {
+                                     try {
+                                         language = Language.valueOf(languageParam.toUpperCase());
+                                     } catch (IllegalArgumentException ignored) {
+                                     }
+                                 }
+                                 
+                                 // OAuth2 제공자 이미지를 MinIO에 저장
+                                 File profileImage = null;
+                                 if (userData.profileImage() != null && !userData.profileImage().isEmpty()) {
+                                     profileImage = imageUploadHelper.uploadImageFromUrl(
+                                             userData.profileImage(), 
+                                             "profiles"
+                                     );
+                                 }
+                                 
                                  User user = User.builder()
                                                  .authProvider(userAuthProvider)
                                                  .openidSub(userData.providerId())
-                                                 .image(null)
+                                                 .image(profileImage)
                                                  .name(userData.name())
                                                  .email(userData.email())
-                                                 .language(Language.EN)
+                                                 .language(language)
                                                  .active(true)
                                                  .build();
                                  return userRepository.save(user);
                              });
     }
 
+    private String getLanguageFromRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            return request.getParameter("lang");
+        }
+        return null;
+    }
+
     private OAuth2User createOAuth2User(User user, Map<String, Object> attributes) {
-        return new OAuth2User() {
-            @Override
-            public Map<String, Object> getAttributes() {
-                return attributes;
-            }
-
-            @Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public String getName() {
-                return user.getId()
-                           .toString();
-            }
-
-            public User getUser() {
-                return user;
-            }
-        };
+        return new CustomOAuth2User(user, attributes);
     }
 }

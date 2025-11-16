@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 @Component
 public class CookieService {
@@ -21,7 +20,7 @@ public class CookieService {
     @Value("${prizm.auth.cookie.same-site}")
     private String sameSite;
 
-    @Value("${prizm.auth.cookie.domain}")
+    @Value("${prizm.auth.cookie.domain:}")
     private String domain;
 
     public void setRefreshToken(HttpServletResponse response, String token) {

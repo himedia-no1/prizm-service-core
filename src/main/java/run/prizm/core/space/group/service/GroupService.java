@@ -3,11 +3,27 @@ package run.prizm.core.space.group.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import run.prizm.core.space.group.dto.GroupCreateRequest;
+import run.prizm.core.space.channel.service.ChannelAccessService;
+import run.prizm.core.space.group.dto.*;
 import run.prizm.core.space.group.entity.Group;
+import run.prizm.core.space.group.entity.GroupChannel;
+import run.prizm.core.space.group.entity.GroupWorkspaceUser;
+import run.prizm.core.space.group.repository.GroupChannelRepository;
 import run.prizm.core.space.group.repository.GroupRepository;
+import run.prizm.core.space.group.repository.GroupWorkspaceUserRepository;
+import run.prizm.core.space.channel.entity.Channel;
+import run.prizm.core.space.channel.repository.ChannelRepository;
+import run.prizm.core.space.category.repository.CategoryRepository;
 import run.prizm.core.space.workspace.entity.Workspace;
+import run.prizm.core.space.workspace.entity.WorkspaceUser;
 import run.prizm.core.space.workspace.repository.WorkspaceRepository;
+import run.prizm.core.space.workspace.repository.WorkspaceUserRepository;
+import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +31,12 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final GroupWorkspaceUserRepository groupWorkspaceUserRepository;
+    private final GroupChannelRepository groupChannelRepository;
+    private final WorkspaceUserRepository workspaceUserRepository;
+    private final ChannelRepository channelRepository;
+    private final CategoryRepository categoryRepository;
+    private final ChannelAccessService channelAccessService;
 
     @Transactional
     public Group createGroup(Long workspaceId, GroupCreateRequest request) {
@@ -27,5 +49,124 @@ public class GroupService {
                            .build();
 
         return groupRepository.save(group);
+    }
+
+    @Transactional(readOnly = true)
+    public GroupListResponse getGroupList(Long workspaceId) {
+        List<Group> groups = groupRepository.findByWorkspaceIdAndDeletedAtIsNullOrderByName(workspaceId);
+
+        List<GroupListResponse.GroupItem> items = groups.stream()
+                .map(group -> new GroupListResponse.GroupItem(group.getId(), group.getName()))
+                .toList();
+
+        return new GroupListResponse(items);
+    }
+
+    @Transactional(readOnly = true)
+    public GroupDetailResponse getGroupDetail(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        List<GroupWorkspaceUser> groupWorkspaceUsers = groupWorkspaceUserRepository
+                .findByGroupIdAndWorkspaceUserDeletedAtIsNull(groupId);
+
+        List<GroupDetailResponse.UserItem> users = groupWorkspaceUsers.stream()
+                .map(gwu -> {
+                    String name = gwu.getWorkspaceUser().getName() != null 
+                            ? gwu.getWorkspaceUser().getName() 
+                            : gwu.getWorkspaceUser().getUser().getName();
+                    return new GroupDetailResponse.UserItem(gwu.getWorkspaceUser().getId(), name);
+                })
+                .sorted((a, b) -> a.name().compareTo(b.name()))
+                .toList();
+
+        List<GroupChannel> groupChannels = groupChannelRepository.findByGroupIdAndChannelDeletedAtIsNull(groupId);
+
+        Map<Long, List<GroupChannel>> channelsByCategory = groupChannels.stream()
+                .collect(Collectors.groupingBy(gc -> gc.getChannel().getCategory().getId()));
+
+        List<GroupDetailResponse.CategoryWithChannels> categories = channelsByCategory.entrySet().stream()
+                .map(entry -> {
+                    Long categoryId = entry.getKey();
+                    var category = categoryRepository.findById(categoryId)
+                            .orElseThrow(() -> new RuntimeException("Category not found"));
+                    
+                    List<GroupDetailResponse.ChannelItem> channels = entry.getValue().stream()
+                            .sorted((a, b) -> a.getChannel().getZIndex().compareTo(b.getChannel().getZIndex()))
+                            .map(gc -> new GroupDetailResponse.ChannelItem(
+                                    gc.getChannel().getId(),
+                                    gc.getChannel().getName(),
+                                    gc.getPermission()
+                            ))
+                            .toList();
+                    
+                    return new GroupDetailResponse.CategoryWithChannels(
+                            category.getId(),
+                            category.getName(),
+                            channels
+                    );
+                })
+                .sorted((a, b) -> a.name().compareTo(b.name()))
+                .toList();
+
+        return new GroupDetailResponse(group.getId(), group.getName(), users, categories);
+    }
+
+    @Transactional
+    public Group updateGroup(Long groupId, GroupUpdateRequest request) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        if (request.name() != null) {
+            group.setName(request.name());
+        }
+
+        groupWorkspaceUserRepository.deleteByGroupId(groupId);
+        
+        if (request.userIds() != null && !request.userIds().isEmpty()) {
+            for (Long workspaceUserId : request.userIds()) {
+                WorkspaceUser workspaceUser = workspaceUserRepository.findById(workspaceUserId)
+                        .orElseThrow(() -> new RuntimeException("Workspace user not found"));
+                
+                if (workspaceUser.getRole() == WorkspaceUserRole.GUEST) {
+                    throw new RuntimeException("Cannot assign GUEST users to groups");
+                }
+                
+                GroupWorkspaceUser gwu = GroupWorkspaceUser.builder()
+                        .group(group)
+                        .workspaceUser(workspaceUser)
+                        .build();
+                groupWorkspaceUserRepository.save(gwu);
+            }
+        }
+
+        groupChannelRepository.deleteByGroupId(groupId);
+        
+        if (request.channels() != null && !request.channels().isEmpty()) {
+            for (var channelItem : request.channels()) {
+                Channel channel = channelRepository.findById(channelItem.channelId())
+                        .orElseThrow(() -> new RuntimeException("Channel not found"));
+                
+                GroupChannel gc = GroupChannel.builder()
+                        .group(group)
+                        .channel(channel)
+                        .permission(channelItem.permission())
+                        .build();
+                groupChannelRepository.save(gc);
+            }
+        }
+
+        channelAccessService.invalidateWorkspaceCache(group.getWorkspace().getId());
+
+        return groupRepository.save(group);
+    }
+
+    @Transactional
+    public void deleteGroup(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        group.setDeletedAt(Instant.now());
+        groupRepository.save(group);
     }
 }

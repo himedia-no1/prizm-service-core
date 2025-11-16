@@ -10,6 +10,7 @@ import run.prizm.core.space.category.entity.Category;
 import run.prizm.core.space.channel.constraint.ChannelType;
 import run.prizm.core.space.workspace.entity.Workspace;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -41,7 +42,7 @@ public class Channel {
     private String description;
 
     @Column(nullable = false)
-    private double zIndex;
+    private BigDecimal zIndex;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -54,7 +55,7 @@ public class Channel {
     private Instant deletedAt;
 
     @Builder
-    public Channel(Workspace workspace, Category category, ChannelType type, String name, String description, double zIndex) {
+    public Channel(Workspace workspace, Category category, ChannelType type, String name, String description, BigDecimal zIndex) {
         this.workspace = workspace;
         this.category = category;
         this.type = type;
