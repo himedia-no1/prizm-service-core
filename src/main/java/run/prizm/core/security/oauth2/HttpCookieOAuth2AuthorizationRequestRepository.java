@@ -45,7 +45,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
             addCookie(response, LANGUAGE_PARAM_COOKIE_NAME, language, COOKIE_EXPIRE_SECONDS);
         }
         
-        String inviteCode = request.getParameter("inviteCode");
+        String inviteCode = request.getParameter("invite");
         if (inviteCode != null && !inviteCode.isBlank()) {
             addCookie(response, INVITE_CODE_PARAM_COOKIE_NAME, inviteCode, COOKIE_EXPIRE_SECONDS);
         }
