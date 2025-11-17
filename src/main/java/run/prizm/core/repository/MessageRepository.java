@@ -1,7 +1,7 @@
-package run.prizm.core.message.repository;
+package run.prizm.core.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import run.prizm.core.message.entity.Message;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
 }
