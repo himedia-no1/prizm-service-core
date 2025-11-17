@@ -30,12 +30,10 @@ public class AuthService {
             throw new RuntimeException("Refresh token not found");
         }
 
-        // 1. JWT 검증 (Secret + 만료시간)
         if (!jwtService.validateToken(refreshToken)) {
             throw new RuntimeException("Invalid or expired refresh token");
         }
 
-        // 2. Redis 비교
         RefreshTokenCacheRepository.RefreshTokenData tokenData = refreshTokenCacheRepository.findByToken(refreshToken);
         if (tokenData == null || !tokenData.token().equals(refreshToken)) {
             throw new RuntimeException("Refresh token not found in storage");
@@ -48,7 +46,6 @@ public class AuthService {
             throw new RuntimeException("User is deleted");
         }
 
-        // Rotation 제거: 새로운 Access Token만 발급
         String newAccessToken = jwtService.generateAccessToken(user);
 
         return new TokenRefreshResponse(newAccessToken);

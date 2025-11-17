@@ -82,12 +82,10 @@ public class WorkspaceUserService {
                 .orElseThrow(() -> new RuntimeException("Workspace user not found"));
 
         if (request.image() != null && !request.image().isEmpty()) {
-            // 기존 이미지 삭제
             if (workspaceUser.getImage() != null) {
                 imageUploadHelper.deleteImage(workspaceUser.getImage());
             }
             
-            // 새 이미지 업로드 및 저장
             File newImage = imageUploadHelper.uploadImage(request.image(), "workspace-profiles");
             workspaceUser.setImage(newImage);
         }

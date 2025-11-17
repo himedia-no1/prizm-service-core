@@ -75,12 +75,10 @@ public class WorkspaceService {
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
         if (request.image() != null && !request.image().isEmpty()) {
-            // 기존 이미지 삭제
             if (workspace.getImage() != null) {
                 imageUploadHelper.deleteImage(workspace.getImage());
             }
             
-            // 새 이미지 업로드 및 저장
             File newImage = imageUploadHelper.uploadImage(request.image(), "workspaces");
             workspace.setImage(newImage);
         }

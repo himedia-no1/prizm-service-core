@@ -44,12 +44,10 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (request.profileImage() != null && !request.profileImage().isEmpty()) {
-            // 기존 이미지 삭제
             if (user.getImage() != null) {
                 imageUploadHelper.deleteImage(user.getImage());
             }
             
-            // 새 이미지 업로드 및 저장
             File newImage = imageUploadHelper.uploadImage(request.profileImage(), "profiles");
             user.setImage(newImage);
         }

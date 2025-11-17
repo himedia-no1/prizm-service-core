@@ -110,12 +110,10 @@ public class ChannelAccessService {
 
     @CacheEvict(value = "channelAccess", key = "#workspaceId + ':' + #userId")
     public void invalidateCache(Long workspaceId, Long userId) {
-        // Spring Cache가 자동으로 처리
     }
 
     @CacheEvict(value = "channelAccess", allEntries = true)
     public void invalidateWorkspaceCache(Long workspaceId) {
-        // Spring Cache가 자동으로 처리
     }
     
     @Transactional(readOnly = true)

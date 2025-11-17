@@ -51,11 +51,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
             additionalParameters.put("invite", inviteCode);
         }
 
-        // redirect_uri를 프론트엔드 도메인으로 변경
         String originalRedirectUri = authorizationRequest.getRedirectUri();
-        // originalRedirectUri 형식: http://localhost:8080/api/auth/oauth2/callback/google
-        // frontendUrl 형식: http://localhost:3000
-        // 결과: http://localhost:3000/api/auth/oauth2/callback/google
         String path = originalRedirectUri.substring(originalRedirectUri.indexOf("/api/"));
         String frontendRedirectUri = frontendUrl + path;
 

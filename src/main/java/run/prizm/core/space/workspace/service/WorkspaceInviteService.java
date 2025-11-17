@@ -107,8 +107,6 @@ public class WorkspaceInviteService {
             throw new RuntimeException("Channel not in workspace");
         }
 
-        // OWNER, MANAGER는 항상 가능
-        // MEMBER는 해당 채널에 MANAGE 권한이 있어야 가능
         if (creator.getRole() == WorkspaceUserRole.MEMBER) {
             String permission = channelAccessService.getChannelPermission(workspaceId, creatorUserId, channelId);
             if (!"MANAGE".equals(permission)) {

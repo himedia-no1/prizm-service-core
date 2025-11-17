@@ -8,7 +8,6 @@ import java.util.Arrays;
 public class CookieUtils {
 
     private CookieUtils() {
-        // Utility class
     }
 
     public static String getCookieValue(HttpServletRequest request, String name) {

@@ -81,7 +81,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                      }
                                  }
                                  
-                                 // OAuth2 제공자 이미지를 MinIO에 저장
                                  File profileImage = null;
                                  if (userData.profileImage() != null && !userData.profileImage().isEmpty()) {
                                      profileImage = imageUploadHelper.uploadImageFromUrl(
