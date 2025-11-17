@@ -83,6 +83,10 @@ public class UserService {
         String key = LAST_PATH_KEY_PREFIX + userId;
         String path = (String) redisTemplate.opsForValue()
                                             .get(key);
+        // Redis에 저장된 값이 없으면 기본값 반환
+        if (path == null || path.isEmpty()) {
+            path = "/workspace";
+        }
         return new UserLastPathResponse(path);
     }
 }
