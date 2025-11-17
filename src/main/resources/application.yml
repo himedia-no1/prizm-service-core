@@ -45,6 +45,14 @@ spring:
           google:
             issuer-uri: https://accounts.google.com
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT} # AMQP Port
+    stomp-port: ${RABBITMQ_STOMP_PORT} # STOMP Port
+    username: ${RABBITMQ_USERNAME}
+    # Provide password using environment variable: RABBITMQ_PASSWORD
+    password: ${RABBITMQ_PASSWORD}
+
 prizm:
   auth:
     jwt:

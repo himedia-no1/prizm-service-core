@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "spring.rabbitmq.stomp-port",
+      "type": "java.lang.String",
+      "description": "Description for spring.rabbitmq.stomp-port."
+  }
+] }
