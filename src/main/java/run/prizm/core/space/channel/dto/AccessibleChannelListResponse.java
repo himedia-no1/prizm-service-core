@@ -9,11 +9,13 @@ public record AccessibleChannelListResponse(
             Long id,
             String name,
             List<ChannelItem> channels
-    ) {}
-    
+    ) {
+    }
+
     public record ChannelItem(
             Long id,
             String name,
             String permission
-    ) {}
+    ) {
+    }
 }

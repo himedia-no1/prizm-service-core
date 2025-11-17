@@ -51,7 +51,7 @@ public class WorkspaceController {
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<WorkspaceResponse> updateWorkspace(
             @PathVariable Long workspaceId,
-            @ModelAttribute WorkspaceUpdateRequest request
+            @Valid @ModelAttribute WorkspaceUpdateRequest request
     ) {
         WorkspaceResponse response = workspaceService.updateWorkspace(workspaceId, request);
         return ResponseEntity.ok(response);
@@ -63,6 +63,7 @@ public class WorkspaceController {
             @PathVariable Long workspaceId
     ) {
         workspaceService.deleteWorkspace(workspaceId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 }

@@ -8,10 +8,10 @@ import run.prizm.core.space.group.entity.GroupChannel;
 import java.util.List;
 
 public interface GroupChannelRepository extends JpaRepository<GroupChannel, Long> {
-    
+
     @Query("SELECT gc FROM GroupChannel gc WHERE gc.group.id = :groupId AND gc.channel.deletedAt IS NULL")
     List<GroupChannel> findByGroupIdAndChannelDeletedAtIsNull(Long groupId);
-    
+
     @Modifying
     @Query("DELETE FROM GroupChannel gc WHERE gc.group.id = :groupId")
     void deleteByGroupId(Long groupId);

@@ -7,4 +7,5 @@ public record ChannelInfoResponse(
         String name,
         String description,
         ChannelWorkspaceUserNotify myNotify
-) {}
+) {
+}

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 
 import java.time.Duration;
 
@@ -23,7 +25,7 @@ public class ChannelAccessCacheRepository {
             String json = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(key, json, TTL);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to cache channel access data", e);
+            throw new BusinessException(ErrorCode.CACHE_OPERATION_FAILED, e.getMessage());
         }
     }
 
@@ -33,7 +35,7 @@ public class ChannelAccessCacheRepository {
             String json = redisTemplate.opsForValue().get(key);
             return json != null ? objectMapper.readValue(json, clazz) : null;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve channel access cache", e);
+            throw new BusinessException(ErrorCode.CACHE_OPERATION_FAILED, e.getMessage());
         }
     }
 

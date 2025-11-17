@@ -2,6 +2,7 @@ package run.prizm.core.user.dto;
 
 import run.prizm.core.common.constraint.Language;
 import run.prizm.core.user.constraint.UserAuthProvider;
+
 import java.time.Instant;
 
 public record UserProfileResponse(
@@ -11,4 +12,5 @@ public record UserProfileResponse(
         UserAuthProvider authProvider,
         Language language,
         Instant createdAt
-) {}
+) {
+}

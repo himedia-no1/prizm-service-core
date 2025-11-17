@@ -22,7 +22,8 @@ public class JwtService {
     public String generateAccessToken(User user) {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiration = new Date(now + authProperties.getJwt().getAccessTokenExpiration());
+        Date expiration = new Date(now + authProperties.getJwt()
+                                                       .getAccessTokenExpiration());
 
         SecretKey key = getSigningKey();
 
@@ -38,7 +39,8 @@ public class JwtService {
     public String generateRefreshToken() {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiration = new Date(now + authProperties.getJwt().getRefreshTokenExpiration());
+        Date expiration = new Date(now + authProperties.getJwt()
+                                                       .getRefreshTokenExpiration());
 
         SecretKey key = getSigningKey();
 
@@ -50,11 +52,13 @@ public class JwtService {
     }
 
     public long getAccessTokenExpirationInSeconds() {
-        return authProperties.getJwt().getAccessTokenExpiration() / 1000;
+        return authProperties.getJwt()
+                             .getAccessTokenExpiration() / 1000;
     }
 
     public long getRefreshTokenExpirationInSeconds() {
-        return authProperties.getJwt().getRefreshTokenExpiration() / 1000;
+        return authProperties.getJwt()
+                             .getRefreshTokenExpiration() / 1000;
     }
 
     public boolean validateToken(String token) {
@@ -101,6 +105,8 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(authProperties.getJwt().getSecret().getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(authProperties.getJwt()
+                                                .getSecret()
+                                                .getBytes(StandardCharsets.UTF_8));
     }
 }

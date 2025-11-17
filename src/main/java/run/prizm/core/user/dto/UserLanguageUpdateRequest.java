@@ -5,4 +5,5 @@ import run.prizm.core.common.constraint.Language;
 
 public record UserLanguageUpdateRequest(
         @NotNull Language language
-) {}
+) {
+}

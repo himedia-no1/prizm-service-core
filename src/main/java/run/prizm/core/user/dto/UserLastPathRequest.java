@@ -1,12 +1,8 @@
 package run.prizm.core.user.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserLastPathRequest {
-    private String path;
+public record UserLastPathRequest(
+        @NotBlank String path
+) {
 }

@@ -13,5 +13,6 @@ public record WorkspaceUserListResponse(
             String image,
             String name,
             String email
-    ) {}
+    ) {
+    }
 }

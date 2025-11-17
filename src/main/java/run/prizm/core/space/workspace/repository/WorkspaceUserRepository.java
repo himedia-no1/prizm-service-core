@@ -14,20 +14,20 @@ public interface WorkspaceUserRepository extends JpaRepository<WorkspaceUser, Lo
     boolean existsByWorkspaceIdAndUserIdAndDeletedAtIsNull(Long workspaceId, Long userId);
 
     long countByWorkspaceIdAndDeletedAtIsNull(Long workspaceId);
-    
+
     List<WorkspaceUser> findByWorkspaceIdAndDeletedAtIsNull(Long workspaceId);
-    
+
     List<WorkspaceUser> findByWorkspaceIdAndRoleAndDeletedAtIsNull(Long workspaceId, WorkspaceUserRole role);
-    
+
     Optional<WorkspaceUser> findByWorkspaceIdAndUserIdAndDeletedAtIsNull(Long workspaceId, Long userId);
-    
+
     Optional<WorkspaceUser> findByWorkspaceIdAndUserId(Long workspaceId, Long userId);
 
     @Query("SELECT wu FROM WorkspaceUser wu " +
-           "JOIN FETCH wu.workspace w " +
-           "WHERE wu.user.id = :userId " +
-           "AND wu.deletedAt IS NULL " +
-           "AND w.deletedAt IS NULL " +
-           "ORDER BY w.name ASC")
+            "JOIN FETCH wu.workspace w " +
+            "WHERE wu.user.id = :userId " +
+            "AND wu.deletedAt IS NULL " +
+            "AND w.deletedAt IS NULL " +
+            "ORDER BY w.name ASC")
     List<WorkspaceUser> findActiveWorkspacesByUserId(@Param("userId") Long userId);
 }

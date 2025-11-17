@@ -5,4 +5,5 @@ import run.prizm.core.space.workspace.constraint.WorkspaceUserNotify;
 
 public record WorkspaceUserNotifyUpdateRequest(
         @NotNull WorkspaceUserNotify notifyType
-) {}
+) {
+}

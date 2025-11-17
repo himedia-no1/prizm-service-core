@@ -33,7 +33,7 @@ public class CategoryController {
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Long categoryId,
-            @RequestBody CategoryUpdateRequest request
+            @Valid @RequestBody CategoryUpdateRequest request
     ) {
         CategoryResponse response = categoryService.updateCategory(categoryId, request);
         return ResponseEntity.ok(response);
@@ -43,10 +43,11 @@ public class CategoryController {
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<Void> updateZIndex(
             @PathVariable Long categoryId,
-            @RequestBody CategoryZIndexUpdateRequest request
+            @Valid @RequestBody CategoryZIndexUpdateRequest request
     ) {
         categoryService.updateZIndex(categoryId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/{categoryId}")
@@ -55,6 +56,7 @@ public class CategoryController {
             @PathVariable Long categoryId
     ) {
         categoryService.deleteCategory(categoryId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 }

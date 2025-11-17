@@ -27,46 +27,55 @@ public class WorkspaceInviteCacheRepository {
         Duration ttl = calculateTtl(cache);
         String key = key(cache.getCode());
         String indexKey = workspaceIndexKey(cache.getWorkspaceId());
-        
+
         if (ttl != null) {
             if (ttl.isZero() || ttl.isNegative()) {
                 redisTemplate.delete(key);
-                stringRedisTemplate.opsForSet().remove(indexKey, cache.getCode());
+                stringRedisTemplate.opsForSet()
+                                   .remove(indexKey, cache.getCode());
             } else {
-                redisTemplate.opsForValue().set(key, cache, ttl);
-                stringRedisTemplate.opsForSet().add(indexKey, cache.getCode());
+                redisTemplate.opsForValue()
+                             .set(key, cache, ttl);
+                stringRedisTemplate.opsForSet()
+                                   .add(indexKey, cache.getCode());
                 stringRedisTemplate.expire(indexKey, ttl);
             }
             return;
         }
-        redisTemplate.opsForValue().set(key, cache);
-        stringRedisTemplate.opsForSet().add(indexKey, cache.getCode());
+        redisTemplate.opsForValue()
+                     .set(key, cache);
+        stringRedisTemplate.opsForSet()
+                           .add(indexKey, cache.getCode());
     }
 
     public Optional<WorkspaceInviteCache> find(String code) {
-        return Optional.ofNullable(redisTemplate.opsForValue().get(key(code)));
+        return Optional.ofNullable(redisTemplate.opsForValue()
+                                                .get(key(code)));
     }
 
     public List<WorkspaceInviteCache> findByWorkspaceId(Long workspaceId) {
         String indexKey = workspaceIndexKey(workspaceId);
-        Set<String> codes = stringRedisTemplate.opsForSet().members(indexKey);
-        
+        Set<String> codes = stringRedisTemplate.opsForSet()
+                                               .members(indexKey);
+
         if (codes == null || codes.isEmpty()) {
             return List.of();
         }
-        
+
         return codes.stream()
-                .map(this::find)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                    .map(this::find)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
     }
 
     public void delete(String code) {
-        WorkspaceInviteCache cache = redisTemplate.opsForValue().get(key(code));
+        WorkspaceInviteCache cache = redisTemplate.opsForValue()
+                                                  .get(key(code));
         if (cache != null) {
             String indexKey = workspaceIndexKey(cache.getWorkspaceId());
-            stringRedisTemplate.opsForSet().remove(indexKey, code);
+            stringRedisTemplate.opsForSet()
+                               .remove(indexKey, code);
         }
         redisTemplate.delete(key(code));
     }
@@ -75,7 +84,8 @@ public class WorkspaceInviteCacheRepository {
         if (cache.getExpiresAt() == null) {
             return null;
         }
-        long remainingMillis = cache.getExpiresAt() - Instant.now().toEpochMilli();
+        long remainingMillis = cache.getExpiresAt() - Instant.now()
+                                                             .toEpochMilli();
         if (remainingMillis <= 0) {
             return Duration.ZERO;
         }

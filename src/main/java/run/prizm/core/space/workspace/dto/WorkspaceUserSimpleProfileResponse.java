@@ -8,4 +8,5 @@ public record WorkspaceUserSimpleProfileResponse(
         WorkspaceUserState state,
         String image,
         String name
-) {}
+) {
+}

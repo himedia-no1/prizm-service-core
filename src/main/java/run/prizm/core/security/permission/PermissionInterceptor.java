@@ -42,20 +42,17 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
 
         Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-        
+
         if (workspaceRoleAnnotation != null) {
             return checkWorkspaceRole(userId, pathVariables, workspaceRoleAnnotation, response);
         }
 
-        if (channelPermissionAnnotation != null) {
-            return checkChannelPermission(userId, pathVariables, channelPermissionAnnotation, response);
-        }
+        return checkChannelPermission(userId, pathVariables, channelPermissionAnnotation, response);
 
-        return true;
     }
 
-    private boolean checkWorkspaceRole(Long userId, Map<String, String> pathVariables, 
-                                      RequireWorkspaceRole annotation, HttpServletResponse response) {
+    private boolean checkWorkspaceRole(Long userId, Map<String, String> pathVariables,
+                                       RequireWorkspaceRole annotation, HttpServletResponse response) {
         String workspaceIdStr = pathVariables.get("workspaceId");
         if (workspaceIdStr == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -83,10 +80,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
     }
 
     private boolean checkChannelPermission(Long userId, Map<String, String> pathVariables,
-                                          RequireChannelPermission annotation, HttpServletResponse response) {
+                                           RequireChannelPermission annotation, HttpServletResponse response) {
         String workspaceIdStr = pathVariables.get("workspaceId");
         String channelIdStr = pathVariables.get("channelId");
-        
+
         if (workspaceIdStr == null || channelIdStr == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return false;
@@ -107,7 +104,8 @@ public class PermissionInterceptor implements HandlerInterceptor {
         Map<Long, ChannelPermission> permissions = channelPermissionCalculator.calculatePermissions(workspaceUser);
         ChannelPermission userPermission = permissions.getOrDefault(channelId, ChannelPermission.NONE);
 
-        if (userPermission.getLevel() >= annotation.value().getLevel()) {
+        if (userPermission.getLevel() >= annotation.value()
+                                                   .getLevel()) {
             return true;
         }
 

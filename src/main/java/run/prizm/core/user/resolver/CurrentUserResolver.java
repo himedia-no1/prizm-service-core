@@ -2,6 +2,7 @@ package run.prizm.core.user.resolver;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,7 +11,8 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import run.prizm.core.user.entity.User;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.user.repository.UserRepository;
 
 @Component
@@ -25,38 +27,35 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public Object resolveArgument(@NotNull MethodParameter parameter, ModelAndViewContainer mavContainer,
+                                  @NotNull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
         Authentication authentication = SecurityContextHolder.getContext()
                                                              .getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("Unauthorized");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         Object principal = authentication.getPrincipal();
-        if (!(principal instanceof Claims)) {
-            throw new RuntimeException("Invalid authentication");
+        if (!(principal instanceof Claims claims)) {
+            throw new BusinessException(ErrorCode.INVALID_AUTHENTICATION);
         }
 
-        Claims claims = (Claims) principal;
         Object idObj = claims.get("id");
 
         if (idObj == null) {
-            throw new RuntimeException("Invalid token");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
         Long userId = idObj instanceof Number ? ((Number) idObj).longValue() : Long.parseLong(idObj.toString());
-        
+
         Class<?> parameterType = parameter.getParameterType();
-        
+
         if (parameterType.equals(Long.class)) {
             return userId;
         }
-        
-        User user = userRepository.findById(userId)
-                                  .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return user;
+        return userRepository.findById(userId)
+                             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }

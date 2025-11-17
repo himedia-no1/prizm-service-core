@@ -1,5 +1,6 @@
 package run.prizm.core.user.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class UserController {
     @PatchMapping("/profile")
     public ResponseEntity<UserProfileResponse> updateProfile(
             @CurrentUser Long userId,
-            @ModelAttribute UserProfileUpdateRequest request
+            @Valid @ModelAttribute UserProfileUpdateRequest request
     ) {
         UserProfileResponse response = userService.updateProfile(userId, request);
         return ResponseEntity.ok(response);
@@ -32,7 +33,7 @@ public class UserController {
     @PatchMapping("/language")
     public ResponseEntity<UserProfileResponse> updateLanguage(
             @CurrentUser Long userId,
-            @RequestBody UserLanguageUpdateRequest request
+            @Valid @RequestBody UserLanguageUpdateRequest request
     ) {
         UserProfileResponse response = userService.updateLanguage(userId, request);
         return ResponseEntity.ok(response);
@@ -41,10 +42,11 @@ public class UserController {
     @PostMapping("/last-path")
     public ResponseEntity<Void> saveLastPath(
             @CurrentUser Long userId,
-            @RequestBody UserLastPathRequest request
+            @Valid @RequestBody UserLastPathRequest request
     ) {
         userService.saveLastPath(userId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @GetMapping("/last-path")

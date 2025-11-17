@@ -9,4 +9,5 @@ public record WorkspaceInviteInfoResponse(
         Integer usedCount,
         Integer maxCount,
         String location
-) {}
+) {
+}

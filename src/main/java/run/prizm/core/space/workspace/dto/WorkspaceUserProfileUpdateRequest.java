@@ -7,4 +7,5 @@ public record WorkspaceUserProfileUpdateRequest(
         String name,
         String phone,
         String introduction
-) {}
+) {
+}

@@ -21,10 +21,10 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
     private static final String PUBLIC_INVITE_PATH = "/api/invite";
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return "GET".equalsIgnoreCase(request.getMethod()) &&
-               path.startsWith(PUBLIC_INVITE_PATH) &&
-               !path.endsWith("/join");
+                path.startsWith(PUBLIC_INVITE_PATH) &&
+                !path.endsWith("/join");
     }
 }

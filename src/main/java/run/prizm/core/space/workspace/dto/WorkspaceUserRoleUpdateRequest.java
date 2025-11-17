@@ -5,4 +5,5 @@ import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 
 public record WorkspaceUserRoleUpdateRequest(
         @NotNull WorkspaceUserRole role
-) {}
+) {
+}

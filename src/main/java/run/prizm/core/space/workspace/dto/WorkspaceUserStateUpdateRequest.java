@@ -5,4 +5,5 @@ import run.prizm.core.space.workspace.constraint.WorkspaceUserState;
 
 public record WorkspaceUserStateUpdateRequest(
         @NotNull WorkspaceUserState state
-) {}
+) {
+}

@@ -13,17 +13,20 @@ public record GroupDetailResponse(
     public record UserItem(
             Long id,
             String name
-    ) {}
-    
+    ) {
+    }
+
     public record CategoryWithChannels(
             Long id,
             String name,
             List<ChannelItem> channels
-    ) {}
-    
+    ) {
+    }
+
     public record ChannelItem(
             Long id,
             String name,
             GroupChannelPermission permission
-    ) {}
+    ) {
+    }
 }

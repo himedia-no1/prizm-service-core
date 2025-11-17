@@ -2,7 +2,6 @@ package run.prizm.core.security.oauth2;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -12,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import run.prizm.core.common.constraint.Language;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.common.util.ImageUploadHelper;
 import run.prizm.core.file.entity.File;
 import run.prizm.core.security.oauth2.extractor.OAuth2AttributeExtractor;
@@ -19,8 +20,6 @@ import run.prizm.core.user.constraint.UserAuthProvider;
 import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -36,12 +35,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        String registrationId = userRequest.getClientRegistration()
+                                           .getRegistrationId();
         OAuth2AttributeExtractor extractor = findExtractor(registrationId);
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
-        
+
         String languageParam = getLanguageFromRequest();
-        
+
         User user = authenticateWithOAuth2(registrationId, userData, languageParam);
         return createOAuth2User(user, oAuth2User.getAttributes());
     }
@@ -50,7 +50,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return extractors.stream()
                          .filter(extractor -> extractor.supports(provider))
                          .findFirst()
-                         .orElseThrow(() -> new RuntimeException("Unsupported OAuth provider"));
+                         .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
     }
 
     private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData, String languageParam) {
@@ -59,7 +59,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                              .map(user -> {
                                  user.setName(userData.name());
                                  user.setEmail(userData.email());
-                                 
+
                                  if (languageParam != null) {
                                      try {
                                          Language newLanguage = Language.valueOf(languageParam.toUpperCase());
@@ -69,7 +69,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                      } catch (IllegalArgumentException ignored) {
                                      }
                                  }
-                                 
+
                                  return userRepository.save(user);
                              })
                              .orElseGet(() -> {
@@ -80,15 +80,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                      } catch (IllegalArgumentException ignored) {
                                      }
                                  }
-                                 
+
                                  File profileImage = null;
-                                 if (userData.profileImage() != null && !userData.profileImage().isEmpty()) {
+                                 if (userData.profileImage() != null && !userData.profileImage()
+                                                                                 .isEmpty()) {
                                      profileImage = imageUploadHelper.uploadImageFromUrl(
-                                             userData.profileImage(), 
+                                             userData.profileImage(),
                                              "profiles"
                                      );
                                  }
-                                 
+
                                  User user = User.builder()
                                                  .authProvider(userAuthProvider)
                                                  .openidSub(userData.providerId())

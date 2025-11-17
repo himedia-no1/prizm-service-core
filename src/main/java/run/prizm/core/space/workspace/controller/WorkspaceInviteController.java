@@ -26,18 +26,18 @@ public class WorkspaceInviteController {
             @Valid @RequestBody WorkspaceInviteCreateRequest request
     ) {
         WorkspaceInviteCreateResponse response;
-        
+
         if (request.channelId() != null) {
             response = workspaceInviteService.createGuestInvite(
-                    workspaceId, 
-                    userId, 
-                    request.channelId(), 
+                    workspaceId,
+                    userId,
+                    request.channelId(),
                     request.allowedUserIds()
             );
         } else {
             response = workspaceInviteService.createMemberInvite(workspaceId, userId, request);
         }
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -57,7 +57,8 @@ public class WorkspaceInviteController {
             @PathVariable String code
     ) {
         workspaceInviteService.deleteInvite(workspaceId, code);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PostMapping("/api/invites/{code}/join")

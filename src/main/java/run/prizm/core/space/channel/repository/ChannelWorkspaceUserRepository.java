@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ChannelWorkspaceUserRepository extends JpaRepository<ChannelWorkspaceUser, Long> {
-    
+
     Optional<ChannelWorkspaceUser> findByChannelIdAndWorkspaceUserId(Long channelId, Long workspaceUserId);
-    
+
     Optional<ChannelWorkspaceUser> findByChannelAndWorkspaceUser(Channel channel, WorkspaceUser workspaceUser);
-    
+
     List<ChannelWorkspaceUser> findByWorkspaceUserAndExplicitTrue(WorkspaceUser workspaceUser);
 }

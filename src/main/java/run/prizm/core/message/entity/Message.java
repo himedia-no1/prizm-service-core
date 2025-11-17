@@ -8,8 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import run.prizm.core.common.id.UuidV7LongGeneratedValue;
 import run.prizm.core.file.entity.File;
 import run.prizm.core.message.constraint.MessageType;
-import run.prizm.core.space.workspace.entity.WorkspaceUser;
 import run.prizm.core.space.channel.entity.Channel;
+import run.prizm.core.space.workspace.entity.WorkspaceUser;
 
 import java.time.Instant;
 

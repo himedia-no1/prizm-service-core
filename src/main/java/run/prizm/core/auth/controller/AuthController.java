@@ -4,7 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import run.prizm.core.auth.dto.TokenRefreshResponse;
 import run.prizm.core.auth.service.AuthService;
 import run.prizm.core.user.resolver.CurrentUser;
@@ -31,7 +34,8 @@ public class AuthController {
             HttpServletResponse response
     ) {
         authService.logout(request, response);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/withdraw")
@@ -41,6 +45,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         authService.withdraw(userId, request, response);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 }

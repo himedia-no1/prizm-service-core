@@ -1,10 +1,10 @@
 package run.prizm.core.message.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Getter @Setter
-public class TranslationRequest {
-    private Long messageId;
-    private String targetLang;
+public record TranslationRequest(
+        @NotNull Long messageId,
+        @NotBlank String targetLang
+) {
 }

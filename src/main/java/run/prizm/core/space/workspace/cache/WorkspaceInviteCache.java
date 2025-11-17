@@ -21,13 +21,13 @@ public class WorkspaceInviteCache implements Serializable {
     private Integer maxUses;
     private Integer usageCount;
     private Long createdAt;
-    
+
     private WorkspaceUserRole role;
     private List<Long> allowedUserIds;
     private List<Long> autoJoinGroupIds;
     private Long channelId;
 
-    public WorkspaceInviteCache(String code, Long workspaceId, Long allowedUserId, 
+    public WorkspaceInviteCache(String code, Long workspaceId, Long allowedUserId,
                                 Long expiresAt, Integer maxUses, Integer usageCount, Long createdAt) {
         this.code = code;
         this.workspaceId = workspaceId;
@@ -42,7 +42,8 @@ public class WorkspaceInviteCache implements Serializable {
         if (expiresAt == null) {
             return false;
         }
-        return Instant.now().toEpochMilli() >= expiresAt;
+        return Instant.now()
+                      .toEpochMilli() >= expiresAt;
     }
 
     public boolean hasReachedMaxUses() {

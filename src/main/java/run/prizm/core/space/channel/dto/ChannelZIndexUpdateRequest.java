@@ -1,7 +1,10 @@
 package run.prizm.core.space.channel.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record ChannelZIndexUpdateRequest(
-        String position,
+        @NotBlank String position,
         Long beforeId,
         Long afterId
-) {}
+) {
+}

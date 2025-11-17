@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import run.prizm.core.security.permission.RequireWorkspaceRole;
 import run.prizm.core.space.group.dto.*;
-import run.prizm.core.space.group.entity.Group;
 import run.prizm.core.space.group.service.GroupService;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 
@@ -49,7 +48,7 @@ public class GroupController {
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<GroupResponse> updateGroup(
             @PathVariable Long groupId,
-            @RequestBody GroupUpdateRequest request
+            @Valid @RequestBody GroupUpdateRequest request
     ) {
         GroupResponse group = groupService.updateGroup(groupId, request);
         return ResponseEntity.ok(group);
@@ -61,6 +60,7 @@ public class GroupController {
             @PathVariable Long groupId
     ) {
         groupService.deleteGroup(groupId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 }

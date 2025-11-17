@@ -4,4 +4,5 @@ public record WorkspaceListItemResponse(
         Long id,
         String name,
         String image
-) {}
+) {
+}

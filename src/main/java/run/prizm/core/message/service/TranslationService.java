@@ -1,4 +1,4 @@
-package run.prizm.core.service;
+package run.prizm.core.message.service;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -10,15 +10,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import run.prizm.core.common.constraint.Language;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.message.entity.Message;
 import run.prizm.core.message.entity.MessageTranslation;
-import run.prizm.core.repository.LanguageRepository;
-import run.prizm.core.repository.MessageRepository;
-import run.prizm.core.repository.MessageTranslationRepository;
+import run.prizm.core.message.repository.MessageRepository;
+import run.prizm.core.message.repository.MessageTranslationRepository;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -41,26 +41,27 @@ public class TranslationService {
     }
 
     private Mono<String> findExistingTranslation(Long messageId, String targetLangCode) {
-        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguage(messageId, targetLangCode))
-                .subscribeOn(Schedulers.boundedElastic()) // Delegate blocking DB call
-                // 수정된 부분: Optional을 Mono로 올바르게 변환
-                .flatMap(optionalTranslation -> Mono.justOrEmpty(optionalTranslation.map(MessageTranslation::getContent)));
+        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguage(messageId, Language.valueOf(targetLangCode)))
+                   .subscribeOn(Schedulers.boundedElastic()) // Delegate blocking DB call
+                   // 수정된 부분: Optional을 Mono로 올바르게 변환
+                   .flatMap(optionalTranslation -> Mono.justOrEmpty(optionalTranslation.map(MessageTranslation::getContent)));
     }
 
     private Mono<String> translateAndSave(Long messageId, String targetLangCode) {
         // Fetch the original message
         Mono<Message> messageMono = Mono.fromCallable(() -> messageRepository.findById(messageId)
-                        .orElseThrow(() -> new RuntimeException("Message not found with id: " + messageId)))
-                .subscribeOn(Schedulers.boundedElastic());
+                                                                             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "Message not found with id: " + messageId)))
+                                        .subscribeOn(Schedulers.boundedElastic());
 
         // Fetch the language enum
         Mono<Language> languageMono = Mono.fromCallable(() -> {
-            try {
-                return Language.valueOf(targetLangCode.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid target language code: " + targetLangCode, e);
-            }
-        }).subscribeOn(Schedulers.boundedElastic());
+                                              try {
+                                                  return Language.valueOf(targetLangCode.toUpperCase());
+                                              } catch (IllegalArgumentException e) {
+                                                  throw new BusinessException(ErrorCode.INVALID_LANGUAGE_CODE, "Invalid target language code: " + targetLangCode);
+                                              }
+                                          })
+                                          .subscribeOn(Schedulers.boundedElastic());
 
         return messageMono.flatMap(message ->
                 // Call external API
@@ -71,21 +72,22 @@ public class TranslationService {
                             Language targetLanguage = tuple.getT2();
 
                             MessageTranslation newTranslation = MessageTranslation.builder()
-                                    .message(message)
-                                    .language(targetLanguage)
-                                    .content(translatedContent)
-                                    .build();
+                                                                                  .message(message)
+                                                                                  .language(targetLanguage)
+                                                                                  .content(translatedContent)
+                                                                                  .build();
 
                             // Save the new translation (blocking call)
                             return Mono.fromRunnable(() -> messageTranslationRepository.save(newTranslation))
-                                    .subscribeOn(Schedulers.boundedElastic())
-                                    .thenReturn(translatedContent); // After saving, return the content
+                                       .subscribeOn(Schedulers.boundedElastic())
+                                       .thenReturn(translatedContent); // After saving, return the content
                         })
         );
     }
 
     private Mono<String> callExternalTranslationApi(String text, String targetLang) {
-        WebClient webClient = webClientBuilder.baseUrl(apiUrl).build();
+        WebClient webClient = webClientBuilder.baseUrl(apiUrl)
+                                              .build();
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", text);
         if (targetLang != null && !targetLang.isEmpty()) {
@@ -93,11 +95,11 @@ public class TranslationService {
         }
 
         return webClient.post()
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .map(response -> (String) response.get("result"))
-                .doOnError(error -> logger.error("Translation API call failed", error))
-                .onErrorReturn("Error: Translation failed.");
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .map(response -> (String) response.get("result"))
+                        .doOnError(error -> logger.error("Translation API call failed", error))
+                        .onErrorReturn("Error: Translation failed.");
     }
 }

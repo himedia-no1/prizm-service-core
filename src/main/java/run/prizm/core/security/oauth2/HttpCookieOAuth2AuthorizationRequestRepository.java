@@ -34,17 +34,17 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         }
 
         addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS);
-        
+
         String redirectUri = request.getParameter("redirect_uri");
         if (redirectUri != null && !redirectUri.isBlank()) {
             addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUri, COOKIE_EXPIRE_SECONDS);
         }
-        
+
         String language = request.getParameter("lang");
         if (language != null && !language.isBlank()) {
             addCookie(response, LANGUAGE_PARAM_COOKIE_NAME, language, COOKIE_EXPIRE_SECONDS);
         }
-        
+
         String inviteCode = request.getParameter("invite");
         if (inviteCode != null && !inviteCode.isBlank()) {
             addCookie(response, INVITE_CODE_PARAM_COOKIE_NAME, inviteCode, COOKIE_EXPIRE_SECONDS);
@@ -67,7 +67,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals(name)) {
+                if (cookie.getName()
+                          .equals(name)) {
                     return java.util.Optional.of(cookie);
                 }
             }
@@ -87,7 +88,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals(name)) {
+                if (cookie.getName()
+                          .equals(name)) {
                     cookie.setValue("");
                     cookie.setPath("/");
                     cookie.setMaxAge(0);
@@ -98,12 +100,14 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
     }
 
     private String serialize(OAuth2AuthorizationRequest authorizationRequest) {
-        return Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(authorizationRequest));
+        return Base64.getUrlEncoder()
+                     .encodeToString(SerializationUtils.serialize(authorizationRequest));
     }
 
     private OAuth2AuthorizationRequest deserialize(Cookie cookie) {
         return (OAuth2AuthorizationRequest) SerializationUtils.deserialize(
-                Base64.getUrlDecoder().decode(cookie.getValue())
+                Base64.getUrlDecoder()
+                      .decode(cookie.getValue())
         );
     }
 }

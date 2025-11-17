@@ -14,10 +14,10 @@ public class CookieUtils {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             return Arrays.stream(cookies)
-                    .filter(cookie -> name.equals(cookie.getName()))
-                    .findFirst()
-                    .map(Cookie::getValue)
-                    .orElse(null);
+                         .filter(cookie -> name.equals(cookie.getName()))
+                         .findFirst()
+                         .map(Cookie::getValue)
+                         .orElse(null);
         }
         return null;
     }

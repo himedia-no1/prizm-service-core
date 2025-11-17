@@ -1,7 +1,6 @@
 package run.prizm.core.security.oauth2;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
     private final OAuth2AuthorizationRequestResolver defaultResolver;
@@ -58,8 +56,8 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
         String frontendRedirectUri = frontendProperties.getUrl() + path;
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
-                .redirectUri(frontendRedirectUri)
-                .additionalParameters(additionalParameters)
-                .build();
+                                         .redirectUri(frontendRedirectUri)
+                                         .additionalParameters(additionalParameters)
+                                         .build();
     }
 }

@@ -16,22 +16,26 @@ public class CookieService {
     private final AuthProperties authProperties;
 
     public void setAccessToken(HttpServletResponse response, String token) {
-        String cookieHeader = buildSetCookieHeader("access_token", token, getAccessTokenMaxAge(), authProperties.getCookie().getPath());
+        String cookieHeader = buildSetCookieHeader("access_token", token, getAccessTokenMaxAge(), authProperties.getCookie()
+                                                                                                                .getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void setRefreshToken(HttpServletResponse response, String token) {
-        String cookieHeader = buildSetCookieHeader("refresh_token", token, getRefreshTokenMaxAge(), authProperties.getCookie().getPath());
+        String cookieHeader = buildSetCookieHeader("refresh_token", token, getRefreshTokenMaxAge(), authProperties.getCookie()
+                                                                                                                  .getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void deleteAccessToken(HttpServletResponse response) {
-        String cookieHeader = buildDeleteCookieHeader("access_token", authProperties.getCookie().getPath());
+        String cookieHeader = buildDeleteCookieHeader("access_token", authProperties.getCookie()
+                                                                                    .getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void deleteRefreshToken(HttpServletResponse response) {
-        String cookieHeader = buildDeleteCookieHeader("refresh_token", authProperties.getCookie().getPath());
+        String cookieHeader = buildDeleteCookieHeader("refresh_token", authProperties.getCookie()
+                                                                                     .getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
@@ -49,10 +53,10 @@ public class CookieService {
             return null;
         }
         return Arrays.stream(cookies)
-                .filter(cookie -> cookieName.equals(cookie.getName()))
-                .findFirst()
-                .map(jakarta.servlet.http.Cookie::getValue)
-                .orElse(null);
+                     .filter(cookie -> cookieName.equals(cookie.getName()))
+                     .findFirst()
+                     .map(jakarta.servlet.http.Cookie::getValue)
+                     .orElse(null);
     }
 
     private String buildSetCookieHeader(String name, String value, int maxAgeSeconds, String path) {
@@ -75,27 +79,35 @@ public class CookieService {
     }
 
     private int getAccessTokenMaxAge() {
-        return (int) (authProperties.getJwt().getAccessTokenExpiration() / 1000);
+        return (int) (authProperties.getJwt()
+                                    .getAccessTokenExpiration() / 1000);
     }
 
     private int getRefreshTokenMaxAge() {
-        return (int) (authProperties.getJwt().getRefreshTokenExpiration() / 1000);
+        return (int) (authProperties.getJwt()
+                                    .getRefreshTokenExpiration() / 1000);
     }
 
     private void appendCookieAttributes(StringBuilder header) {
-        if (authProperties.getCookie().getHttpOnly()) {
+        if (authProperties.getCookie()
+                          .getHttpOnly()) {
             header.append("; HttpOnly");
         }
-        if (authProperties.getCookie().getSecure()) {
+        if (authProperties.getCookie()
+                          .getSecure()) {
             header.append("; Secure");
         }
-        if (isNotEmpty(authProperties.getCookie().getSameSite())) {
+        if (isNotEmpty(authProperties.getCookie()
+                                     .getSameSite())) {
             header.append("; SameSite=")
-                  .append(authProperties.getCookie().getSameSite());
+                  .append(authProperties.getCookie()
+                                        .getSameSite());
         }
-        if (isNotEmpty(authProperties.getCookie().getDomain())) {
+        if (isNotEmpty(authProperties.getCookie()
+                                     .getDomain())) {
             header.append("; Domain=")
-                  .append(authProperties.getCookie().getDomain());
+                  .append(authProperties.getCookie()
+                                        .getDomain());
         }
     }
 

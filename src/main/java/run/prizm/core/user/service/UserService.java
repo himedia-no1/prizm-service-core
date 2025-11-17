@@ -4,27 +4,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import run.prizm.core.common.constant.FileDirectory;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.common.util.ImageUploadHelper;
 import run.prizm.core.file.entity.File;
-import run.prizm.core.user.repository.UserRepository;
-import run.prizm.core.common.constraint.Language;
 import run.prizm.core.user.dto.*;
 import run.prizm.core.user.entity.User;
+import run.prizm.core.user.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
     private final UserRepository userRepository;
     private final ImageUploadHelper imageUploadHelper;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
-
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                  .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String profileImage = imageUploadHelper.getImageUrl(user.getImage());
 
@@ -41,14 +42,15 @@ public class UserService {
     @Transactional
     public UserProfileResponse updateProfile(Long userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                  .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if (request.profileImage() != null && !request.profileImage().isEmpty()) {
+        if (request.profileImage() != null && !request.profileImage()
+                                                      .isEmpty()) {
             if (user.getImage() != null) {
                 imageUploadHelper.deleteImage(user.getImage());
             }
-            
-            File newImage = imageUploadHelper.uploadImage(request.profileImage(), "profiles");
+
+            File newImage = imageUploadHelper.uploadImage(request.profileImage(), FileDirectory.USER_PROFILES.getPath());
             user.setImage(newImage);
         }
 
@@ -63,7 +65,7 @@ public class UserService {
     @Transactional
     public UserProfileResponse updateLanguage(Long userId, UserLanguageUpdateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                  .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         user.setLanguage(request.language());
         userRepository.save(user);
@@ -73,14 +75,14 @@ public class UserService {
 
     public void saveLastPath(Long userId, UserLastPathRequest request) {
         String key = LAST_PATH_KEY_PREFIX + userId;
-        redisTemplate.opsForValue().set(key, request.getPath());
+        redisTemplate.opsForValue()
+                     .set(key, request.path());
     }
 
     public UserLastPathResponse getLastPath(Long userId) {
         String key = LAST_PATH_KEY_PREFIX + userId;
-        String path = (String) redisTemplate.opsForValue().get(key);
-        return UserLastPathResponse.builder()
-                .path(path)
-                .build();
+        String path = (String) redisTemplate.opsForValue()
+                                            .get(key);
+        return new UserLastPathResponse(path);
     }
 }

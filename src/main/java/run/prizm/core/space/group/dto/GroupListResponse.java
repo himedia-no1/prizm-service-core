@@ -8,5 +8,6 @@ public record GroupListResponse(
     public record GroupItem(
             Long id,
             String name
-    ) {}
+    ) {
+    }
 }

@@ -25,14 +25,14 @@ public class ImageUploadHelper {
 
         try {
             MinioService.UploadResult result = minioService.uploadFile(image, directory);
-            
+
             File file = File.builder()
-                    .name(result.originalName())
-                    .extension(result.extension())
-                    .path(result.path())
-                    .size(result.size())
-                    .build();
-            
+                            .name(result.originalName())
+                            .extension(result.extension())
+                            .path(result.path())
+                            .size(result.size())
+                            .build();
+
             return fileRepository.save(file);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, e.getMessage());
@@ -47,14 +47,14 @@ public class ImageUploadHelper {
 
         try {
             MinioService.UploadResult result = minioService.uploadFromUrl(imageUrl, directory);
-            
+
             File file = File.builder()
-                    .name(result.originalName())
-                    .extension(result.extension())
-                    .path(result.path())
-                    .size(result.size())
-                    .build();
-            
+                            .name(result.originalName())
+                            .extension(result.extension())
+                            .path(result.path())
+                            .size(result.size())
+                            .build();
+
             return fileRepository.save(file);
         } catch (Exception e) {
             return null;
@@ -66,7 +66,7 @@ public class ImageUploadHelper {
         if (file == null) {
             return;
         }
-        
+
         try {
             minioService.deleteFile(file.getPath());
             fileRepository.delete(file);

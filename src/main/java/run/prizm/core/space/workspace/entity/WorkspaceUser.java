@@ -5,12 +5,12 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
-import run.prizm.core.user.entity.User;
 import run.prizm.core.common.id.UuidV7LongGeneratedValue;
 import run.prizm.core.file.entity.File;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserNotify;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserState;
+import run.prizm.core.user.entity.User;
 
 import java.time.Instant;
 

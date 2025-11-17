@@ -20,17 +20,18 @@ public class UserNotifyService {
         List<UserNotify> notifications = userNotifyRepository.findByReceiverIdOrderByCreatedAtDesc(userId);
 
         List<UserNotifyListResponse.UserNotifyItem> items = notifications.stream()
-                .map(notify -> new UserNotifyListResponse.UserNotifyItem(
-                        notify.getId(),
-                        notify.getType(),
-                        notify.getSender() != null ? notify.getSender().getId() : null,
-                        notify.getContent(),
-                        notify.getLocationId(),
-                        notify.isImportant(),
-                        notify.isRead(),
-                        notify.getCreatedAt()
-                ))
-                .toList();
+                                                                         .map(notify -> new UserNotifyListResponse.UserNotifyItem(
+                                                                                 notify.getId(),
+                                                                                 notify.getType(),
+                                                                                 notify.getSender() != null ? notify.getSender()
+                                                                                                                    .getId() : null,
+                                                                                 notify.getContent(),
+                                                                                 notify.getLocationId(),
+                                                                                 notify.isImportant(),
+                                                                                 notify.isRead(),
+                                                                                 notify.getCreatedAt()
+                                                                         ))
+                                                                         .toList();
 
         return new UserNotifyListResponse(items);
     }

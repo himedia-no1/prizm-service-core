@@ -5,4 +5,5 @@ import org.springframework.web.multipart.MultipartFile;
 public record WorkspaceUpdateRequest(
         MultipartFile image,
         String name
-) {}
+) {
+}

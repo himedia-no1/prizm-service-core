@@ -15,13 +15,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         log.error("BusinessException: {}", e.getMessage());
         ErrorResponse response = new ErrorResponse(e.getErrorCode());
-        return new ResponseEntity<>(response, e.getErrorCode().getStatus());
+        return new ResponseEntity<>(response, e.getErrorCode()
+                                               .getStatus());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
         log.error("ValidationException: {}", e.getMessage());
-        String message = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        String message = e.getBindingResult()
+                          .getAllErrors()
+                          .get(0)
+                          .getDefaultMessage();
         ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_INPUT_VALUE, message);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

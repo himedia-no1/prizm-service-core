@@ -13,5 +13,6 @@ public record ChannelUserListResponse(
             WorkspaceUserState state,
             String image,
             String name
-    ) {}
+    ) {
+    }
 }

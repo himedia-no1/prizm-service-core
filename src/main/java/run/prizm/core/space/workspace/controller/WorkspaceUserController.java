@@ -1,5 +1,6 @@
 package run.prizm.core.space.workspace.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,10 +52,11 @@ public class WorkspaceUserController {
     public ResponseEntity<Void> updateProfile(
             @PathVariable Long workspaceId,
             @CurrentUser Long userId,
-            @ModelAttribute WorkspaceUserProfileUpdateRequest request
+            @Valid @ModelAttribute WorkspaceUserProfileUpdateRequest request
     ) {
         workspaceUserService.updateProfile(workspaceId, userId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PatchMapping("/notify")
@@ -62,10 +64,11 @@ public class WorkspaceUserController {
     public ResponseEntity<Void> updateNotify(
             @PathVariable Long workspaceId,
             @CurrentUser Long userId,
-            @RequestBody WorkspaceUserNotifyUpdateRequest request
+            @Valid @RequestBody WorkspaceUserNotifyUpdateRequest request
     ) {
         workspaceUserService.updateNotify(workspaceId, userId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PatchMapping("/state")
@@ -73,10 +76,11 @@ public class WorkspaceUserController {
     public ResponseEntity<Void> updateState(
             @PathVariable Long workspaceId,
             @CurrentUser Long userId,
-            @RequestBody WorkspaceUserStateUpdateRequest request
+            @Valid @RequestBody WorkspaceUserStateUpdateRequest request
     ) {
         workspaceUserService.updateState(workspaceId, userId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PatchMapping("/users/{targetUserId}/role")
@@ -84,11 +88,12 @@ public class WorkspaceUserController {
     public ResponseEntity<Void> updateRole(
             @PathVariable Long workspaceId,
             @PathVariable Long targetUserId,
-            @RequestBody WorkspaceUserRoleUpdateRequest request,
+            @Valid @RequestBody WorkspaceUserRoleUpdateRequest request,
             @CurrentUser Long userId
     ) {
         workspaceUserService.updateRole(workspaceId, targetUserId, request.role(), userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/users/{targetUserId}")
@@ -98,7 +103,8 @@ public class WorkspaceUserController {
             @PathVariable Long targetUserId
     ) {
         workspaceUserService.kickUser(workspaceId, targetUserId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PostMapping("/users/{targetUserId}/ban")
@@ -108,7 +114,8 @@ public class WorkspaceUserController {
             @PathVariable Long targetUserId
     ) {
         workspaceUserService.banUser(workspaceId, targetUserId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/users/{targetUserId}/ban")
@@ -118,7 +125,8 @@ public class WorkspaceUserController {
             @PathVariable Long targetUserId
     ) {
         workspaceUserService.unbanUser(workspaceId, targetUserId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/leave")
@@ -128,6 +136,7 @@ public class WorkspaceUserController {
             @CurrentUser Long userId
     ) {
         workspaceUserService.leaveWorkspace(workspaceId, userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 }

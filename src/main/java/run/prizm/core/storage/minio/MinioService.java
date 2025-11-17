@@ -7,6 +7,8 @@ import io.minio.RemoveObjectArgs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 
 import java.io.InputStream;
 import java.util.UUID;
@@ -47,7 +49,7 @@ public class MinioService {
             
             return new UploadResult(path, nameWithoutExtension, file.getSize(), extension);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload file to MinIO", e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, e.getMessage());
         }
     }
 
@@ -87,7 +89,7 @@ public class MinioService {
             
             return new UploadResult(path, nameWithoutExtension, fileSize, extension);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload file from URL to MinIO", e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, e.getMessage());
         }
     }
 
@@ -100,7 +102,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get file from MinIO", e);
+            throw new BusinessException(ErrorCode.FILE_DOWNLOAD_FAILED, e.getMessage());
         }
     }
 
@@ -113,7 +115,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to delete file from MinIO", e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED, e.getMessage());
         }
     }
 

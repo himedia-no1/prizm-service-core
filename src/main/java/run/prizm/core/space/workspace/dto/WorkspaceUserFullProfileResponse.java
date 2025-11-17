@@ -24,5 +24,6 @@ public record WorkspaceUserFullProfileResponse(
     public record GroupInfo(
             Long id,
             String name
-    ) {}
+    ) {
+    }
 }

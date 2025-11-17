@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import run.prizm.core.security.permission.RequireWorkspaceRole;
 import run.prizm.core.space.channel.dto.*;
-import run.prizm.core.space.channel.entity.Channel;
 import run.prizm.core.space.channel.service.ChannelAccessService;
 import run.prizm.core.space.channel.service.ChannelService;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
@@ -46,7 +45,7 @@ public class ChannelController {
     public ResponseEntity<ChannelResponse> updateChannel(
             @PathVariable Long workspaceId,
             @PathVariable Long channelId,
-            @RequestBody ChannelUpdateRequest request
+            @Valid @RequestBody ChannelUpdateRequest request
     ) {
         ChannelResponse channel = channelService.updateChannel(channelId, request);
         channelAccessService.invalidateWorkspaceCache(workspaceId);
@@ -57,10 +56,11 @@ public class ChannelController {
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<Void> updateZIndex(
             @PathVariable Long channelId,
-            @RequestBody ChannelZIndexUpdateRequest request
+            @Valid @RequestBody ChannelZIndexUpdateRequest request
     ) {
         channelService.updateZIndex(channelId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @PatchMapping("/api/workspaces/{workspaceId}/channels/{channelId}/notify")
@@ -68,10 +68,11 @@ public class ChannelController {
     public ResponseEntity<Void> updateNotify(
             @PathVariable Long channelId,
             @CurrentUser Long workspaceUserId,
-            @RequestBody ChannelNotifyUpdateRequest request
+            @Valid @RequestBody ChannelNotifyUpdateRequest request
     ) {
         channelService.updateNotify(channelId, workspaceUserId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @DeleteMapping("/api/workspaces/{workspaceId}/channels/{channelId}")
@@ -82,7 +83,8 @@ public class ChannelController {
     ) {
         channelService.deleteChannel(channelId);
         channelAccessService.invalidateWorkspaceCache(workspaceId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                             .build();
     }
 
     @GetMapping("/api/workspaces/{workspaceId}/channels/accessible")

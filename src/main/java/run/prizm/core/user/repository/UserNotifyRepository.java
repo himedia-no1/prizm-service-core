@@ -6,6 +6,6 @@ import run.prizm.core.user.entity.UserNotify;
 import java.util.List;
 
 public interface UserNotifyRepository extends JpaRepository<UserNotify, Long> {
-    
+
     List<UserNotify> findByReceiverIdOrderByCreatedAtDesc(Long receiverId);
 }

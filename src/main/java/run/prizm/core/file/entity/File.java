@@ -1,4 +1,3 @@
-
 package run.prizm.core.file.entity;
 
 import jakarta.persistence.*;

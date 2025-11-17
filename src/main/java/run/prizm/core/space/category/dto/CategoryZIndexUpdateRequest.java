@@ -1,7 +1,10 @@
 package run.prizm.core.space.category.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record CategoryZIndexUpdateRequest(
-        String position,
+        @NotBlank String position,
         Long beforeId,
         Long afterId
-) {}
+) {
+}

@@ -1,10 +1,8 @@
 package run.prizm.core.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -29,7 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // ✅ STOMP 브로커 사용 (RabbitMQ)
         //    /topic, /queue prefix를 사용하는 메시지를 브로커로 라우팅
-        registry.enableStompBrokerRelay("/exchange","/topic", "/queue")
+        registry.enableStompBrokerRelay("/exchange", "/topic", "/queue")
                 .setRelayHost(relayHost)
                 .setRelayPort(relayPort)
                 .setClientLogin(clientLogin)
@@ -48,7 +46,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-stomp")
-                .setAllowedOriginPatterns("http://localhost:3000", "http://192.168.0.221:3000")
+                .setAllowedOriginPatterns("http://localhost:3000")
                 .withSockJS();
     }
 

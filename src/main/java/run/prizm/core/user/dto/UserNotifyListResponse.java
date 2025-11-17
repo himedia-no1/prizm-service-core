@@ -1,6 +1,7 @@
 package run.prizm.core.user.dto;
 
 import run.prizm.core.user.constraint.UserNotifyType;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -16,5 +17,6 @@ public record UserNotifyListResponse(
             boolean important,
             boolean read,
             Instant createdAt
-    ) {}
+    ) {
+    }
 }

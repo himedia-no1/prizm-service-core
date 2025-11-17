@@ -10,6 +10,8 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import run.prizm.core.common.constraint.Language;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.properties.FrontendProperties;
 import run.prizm.core.security.cookie.CookieService;
 import run.prizm.core.security.cookie.CookieUtils;
@@ -24,6 +26,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
     private final JwtService jwtService;
     private final CookieService cookieService;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
@@ -31,8 +34,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RefreshTokenCacheRepository refreshTokenCacheRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final FrontendProperties frontendProperties;
-
-    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -66,7 +67,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         }
 
         Language userLanguage = user.getLanguage() != null ? user.getLanguage() : Language.EN;
-        Cookie nextLocaleCookie = new Cookie("NEXT_LOCALE", userLanguage.name().toLowerCase());
+        Cookie nextLocaleCookie = new Cookie("NEXT_LOCALE", userLanguage.name()
+                                                                        .toLowerCase());
         nextLocaleCookie.setPath("/");
         nextLocaleCookie.setMaxAge(365 * 24 * 60 * 60);
         nextLocaleCookie.setHttpOnly(false);
@@ -95,14 +97,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             return customUser.getUser();
         }
         if (principal instanceof OidcUser) {
-            throw new IllegalStateException("Received default OidcUser instead of CustomOAuth2User. Check CustomOAuth2UserService configuration.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        throw new IllegalStateException("Unsupported authentication principal type: " + principal.getClass());
+        throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     private String getLastPath(Long userId) {
         String key = LAST_PATH_KEY_PREFIX + userId;
-        Object value = redisTemplate.opsForValue().get(key);
+        Object value = redisTemplate.opsForValue()
+                                    .get(key);
         return value != null ? value.toString() : null;
     }
 }

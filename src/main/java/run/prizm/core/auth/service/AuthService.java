@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import run.prizm.core.auth.dto.TokenRefreshResponse;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.security.cookie.CookieService;
 import run.prizm.core.security.jwt.JwtService;
 import run.prizm.core.storage.redis.RefreshTokenCacheRepository;
@@ -27,23 +29,24 @@ public class AuthService {
     public TokenRefreshResponse refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = cookieService.extractRefreshTokenFromCookies(request);
         if (refreshToken == null) {
-            throw new RuntimeException("Refresh token not found");
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
         if (!jwtService.validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         RefreshTokenCacheRepository.RefreshTokenData tokenData = refreshTokenCacheRepository.findByToken(refreshToken);
-        if (tokenData == null || !tokenData.token().equals(refreshToken)) {
-            throw new RuntimeException("Refresh token not found in storage");
+        if (tokenData == null || !tokenData.token()
+                                           .equals(refreshToken)) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_IN_STORAGE);
         }
 
         User user = userRepository.findById(tokenData.id())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                  .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getDeletedAt() != null) {
-            throw new RuntimeException("User is deleted");
+            throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
         String newAccessToken = jwtService.generateAccessToken(user);
@@ -63,7 +66,7 @@ public class AuthService {
     @Transactional
     public void withdraw(Long userId, HttpServletRequest request, HttpServletResponse response) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                  .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         user.setDeletedAt(Instant.now());
         userRepository.save(user);

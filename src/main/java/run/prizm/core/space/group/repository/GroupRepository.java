@@ -6,6 +6,6 @@ import run.prizm.core.space.group.entity.Group;
 import java.util.List;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
-    
+
     List<Group> findByWorkspaceIdAndDeletedAtIsNullOrderByName(Long workspaceId);
 }

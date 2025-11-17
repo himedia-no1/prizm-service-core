@@ -1,12 +1,12 @@
 package run.prizm.core.message.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Getter @Setter
-public class MessageSendRequest {
-    private Long channelId;
-    private Long workspaceUserId;
-    private String contentType; // e.g., "STRING", "LINK"
-    private String content;
+public record MessageSendRequest(
+        @NotNull Long channelId,
+        @NotNull Long workspaceUserId,
+        @NotBlank String contentType,
+        @NotBlank String content
+) {
 }

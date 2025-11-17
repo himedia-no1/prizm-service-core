@@ -3,10 +3,11 @@ package run.prizm.core.space.workspace.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import run.prizm.core.common.constant.FileDirectory;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.common.util.ImageUploadHelper;
 import run.prizm.core.file.entity.File;
-import run.prizm.core.user.entity.User;
-import run.prizm.core.user.repository.UserRepository;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserNotify;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserState;
@@ -18,6 +19,8 @@ import run.prizm.core.space.workspace.entity.Workspace;
 import run.prizm.core.space.workspace.entity.WorkspaceUser;
 import run.prizm.core.space.workspace.repository.WorkspaceRepository;
 import run.prizm.core.space.workspace.repository.WorkspaceUserRepository;
+import run.prizm.core.user.entity.User;
+import run.prizm.core.user.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -34,7 +37,7 @@ public class WorkspaceService {
     @Transactional
     public WorkspaceResponse createWorkspace(Long userId, WorkspaceCreateRequest request) {
         User owner = userRepository.findById(userId)
-                                   .orElseThrow(() -> new RuntimeException("User not found"));
+                                   .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Workspace workspace = Workspace.builder()
                                        .name(request.name())
@@ -63,7 +66,7 @@ public class WorkspaceService {
     @Transactional(readOnly = true)
     public WorkspaceResponse getWorkspace(Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+                                                 .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         String imageUrl = imageUploadHelper.getImageUrl(workspace.getImage());
         return new WorkspaceResponse(workspace.getId(), workspace.getName(), imageUrl, workspace.getCreatedAt());
@@ -72,14 +75,15 @@ public class WorkspaceService {
     @Transactional
     public WorkspaceResponse updateWorkspace(Long workspaceId, WorkspaceUpdateRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+                                                 .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        if (request.image() != null && !request.image().isEmpty()) {
+        if (request.image() != null && !request.image()
+                                               .isEmpty()) {
             if (workspace.getImage() != null) {
                 imageUploadHelper.deleteImage(workspace.getImage());
             }
-            
-            File newImage = imageUploadHelper.uploadImage(request.image(), "workspaces");
+
+            File newImage = imageUploadHelper.uploadImage(request.image(), FileDirectory.WORKSPACES.getPath());
             workspace.setImage(newImage);
         }
 
@@ -94,7 +98,7 @@ public class WorkspaceService {
     @Transactional
     public void deleteWorkspace(Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+                                                 .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         workspace.setDeletedAt(Instant.now());
         workspaceRepository.save(workspace);
@@ -102,18 +106,19 @@ public class WorkspaceService {
 
     @Transactional(readOnly = true)
     public List<WorkspaceListItemResponse> listUserWorkspaces(Long userId) {
-        return workspaceUserRepository.findActiveWorkspacesByUserId(userId).stream()
-                .map(wu -> {
-                    Workspace workspace = wu.getWorkspace();
-                    String imageUrl = workspace.getImage() != null 
-                            ? imageUploadHelper.getImageUrl(workspace.getImage())
-                            : null;
-                    return new WorkspaceListItemResponse(
-                            workspace.getId(),
-                            workspace.getName(),
-                            imageUrl
-                    );
-                })
-                .toList();
+        return workspaceUserRepository.findActiveWorkspacesByUserId(userId)
+                                      .stream()
+                                      .map(wu -> {
+                                          Workspace workspace = wu.getWorkspace();
+                                          String imageUrl = workspace.getImage() != null
+                                                  ? imageUploadHelper.getImageUrl(workspace.getImage())
+                                                  : null;
+                                          return new WorkspaceListItemResponse(
+                                                  workspace.getId(),
+                                                  workspace.getName(),
+                                                  imageUrl
+                                          );
+                                      })
+                                      .toList();
     }
 }

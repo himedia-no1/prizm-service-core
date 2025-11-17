@@ -5,10 +5,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
-import run.prizm.core.user.constraint.UserAuthProvider;
 import run.prizm.core.common.constraint.Language;
 import run.prizm.core.common.id.UuidV7LongGeneratedValue;
 import run.prizm.core.file.entity.File;
+import run.prizm.core.user.constraint.UserAuthProvider;
 
 import java.time.Instant;
 
