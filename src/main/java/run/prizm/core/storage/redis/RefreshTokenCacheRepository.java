@@ -1,27 +1,54 @@
 package run.prizm.core.storage.redis;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
 public class RefreshTokenCacheRepository {
 
     private static final String KEY_PREFIX = "refresh:";
-    private static final Duration TTL = Duration.ofDays(7);
 
-    private final RedisTemplate<String, String> redisTemplate;
+    @Value("${prizm.auth.jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
-    public void save(String refreshToken, Long userId) {
-        redisTemplate.opsForValue().set(KEY_PREFIX + refreshToken, userId.toString(), TTL);
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public void save(String refreshToken, Long userId, String role) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("role", role);
+        data.put("id", userId.toString());
+        
+        Duration ttl = Duration.ofMillis(refreshTokenExpiration);
+        redisTemplate.opsForHash().putAll(KEY_PREFIX + refreshToken, data);
+        redisTemplate.expire(KEY_PREFIX + refreshToken, ttl);
+    }
+
+    public RefreshTokenData findByToken(String refreshToken) {
+        Map<Object, Object> data = redisTemplate.opsForHash().entries(KEY_PREFIX + refreshToken);
+        if (data.isEmpty()) {
+            return null;
+        }
+        
+        String role = (String) data.get("role");
+        String idStr = (String) data.get("id");
+        
+        if (role == null || idStr == null) {
+            return null;
+        }
+        
+        return new RefreshTokenData(refreshToken, Long.parseLong(idStr), role);
     }
 
     public Long findUserIdByToken(String refreshToken) {
-        String userId = redisTemplate.opsForValue().get(KEY_PREFIX + refreshToken);
-        return userId != null ? Long.parseLong(userId) : null;
+        RefreshTokenData data = findByToken(refreshToken);
+        return data != null ? data.id() : null;
     }
 
     public void delete(String refreshToken) {
@@ -31,4 +58,6 @@ public class RefreshTokenCacheRepository {
     public boolean exists(String refreshToken) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + refreshToken));
     }
+
+    public record RefreshTokenData(String token, Long id, String role) {}
 }

@@ -1,6 +1,5 @@
 package run.prizm.core.auth.service;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
 
 import java.time.Instant;
-import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -27,17 +25,23 @@ public class AuthService {
 
     @Transactional
     public TokenRefreshResponse refresh(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractRefreshTokenFromCookies(request);
+        String refreshToken = cookieService.extractRefreshTokenFromCookies(request);
         if (refreshToken == null) {
             throw new RuntimeException("Refresh token not found");
         }
 
-        Long userId = refreshTokenCacheRepository.findUserIdByToken(refreshToken);
-        if (userId == null) {
-            throw new RuntimeException("Invalid refresh token");
+        // 1. JWT 검증 (Secret + 만료시간)
+        if (!jwtService.validateToken(refreshToken)) {
+            throw new RuntimeException("Invalid or expired refresh token");
         }
 
-        User user = userRepository.findById(userId)
+        // 2. Redis 비교
+        RefreshTokenCacheRepository.RefreshTokenData tokenData = refreshTokenCacheRepository.findByToken(refreshToken);
+        if (tokenData == null || !tokenData.token().equals(refreshToken)) {
+            throw new RuntimeException("Refresh token not found in storage");
+        }
+
+        User user = userRepository.findById(tokenData.id())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.getDeletedAt() != null) {
@@ -49,7 +53,8 @@ public class AuthService {
         String newAccessToken = jwtService.generateAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken();
 
-        refreshTokenCacheRepository.save(newRefreshToken, user.getId());
+        refreshTokenCacheRepository.save(newRefreshToken, user.getId(), tokenData.role());
+        cookieService.setAccessToken(response, newAccessToken);
         cookieService.setRefreshToken(response, newRefreshToken);
 
         return new TokenRefreshResponse(newAccessToken, jwtService.getAccessTokenExpirationInSeconds());
@@ -57,10 +62,11 @@ public class AuthService {
 
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractRefreshTokenFromCookies(request);
+        String refreshToken = cookieService.extractRefreshTokenFromCookies(request);
         if (refreshToken != null) {
             refreshTokenCacheRepository.delete(refreshToken);
         }
+        cookieService.deleteAccessToken(response);
         cookieService.deleteRefreshToken(response);
     }
 
@@ -72,22 +78,11 @@ public class AuthService {
         user.setDeletedAt(Instant.now());
         userRepository.save(user);
 
-        String refreshToken = extractRefreshTokenFromCookies(request);
+        String refreshToken = cookieService.extractRefreshTokenFromCookies(request);
         if (refreshToken != null) {
             refreshTokenCacheRepository.delete(refreshToken);
         }
+        cookieService.deleteAccessToken(response);
         cookieService.deleteRefreshToken(response);
-    }
-
-    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-        return Arrays.stream(cookies)
-                .filter(cookie -> "refresh_token".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
     }
 }

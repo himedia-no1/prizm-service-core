@@ -40,13 +40,20 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
         }
 
         Claims claims = (Claims) principal;
-        String subject = claims.getSubject();
+        Object idObj = claims.get("id");
 
-        if (subject == null) {
+        if (idObj == null) {
             throw new RuntimeException("Invalid token");
         }
 
-        Long userId = Long.parseLong(subject);
+        Long userId = idObj instanceof Number ? ((Number) idObj).longValue() : Long.parseLong(idObj.toString());
+        
+        Class<?> parameterType = parameter.getParameterType();
+        
+        if (parameterType.equals(Long.class)) {
+            return userId;
+        }
+        
         User user = userRepository.findById(userId)
                                   .orElseThrow(() -> new RuntimeException("User not found"));
 

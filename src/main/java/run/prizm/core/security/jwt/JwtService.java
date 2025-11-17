@@ -32,11 +32,8 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .subject(user.getId()
-                                .toString())
-                   .claim("provider", user.getAuthProvider()
-                                          .name())
-                   .claim("email", user.getEmail())
+                   .claim("role", "USER")
+                   .claim("id", user.getId())
                    .issuedAt(issuedAt)
                    .expiration(expiration)
                    .signWith(key)
@@ -44,11 +41,25 @@ public class JwtService {
     }
 
     public String generateRefreshToken() {
-        return java.util.UUID.randomUUID().toString().replace("-", "");
+        long now = System.currentTimeMillis();
+        Date issuedAt = new Date(now);
+        Date expiration = new Date(now + refreshTokenExpiration);
+
+        SecretKey key = getSigningKey();
+
+        return Jwts.builder()
+                   .issuedAt(issuedAt)
+                   .expiration(expiration)
+                   .signWith(key)
+                   .compact();
     }
 
     public long getAccessTokenExpirationInSeconds() {
         return accessTokenExpiration / 1000;
+    }
+
+    public long getRefreshTokenExpirationInSeconds() {
+        return refreshTokenExpiration / 1000;
     }
 
     public boolean validateToken(String token) {
@@ -64,14 +75,21 @@ public class JwtService {
         }
     }
 
-    public String getTypeFromToken(String token) {
+    public Long getIdFromToken(String token) {
         Claims claims = extractClaims(token);
-        return claims != null ? claims.get("type", String.class) : null;
+        if (claims == null) {
+            return null;
+        }
+        Object idObj = claims.get("id");
+        if (idObj instanceof Number) {
+            return ((Number) idObj).longValue();
+        }
+        return null;
     }
 
-    public String getSubjectFromToken(String token) {
+    public String getRoleFromToken(String token) {
         Claims claims = extractClaims(token);
-        return claims != null ? claims.getSubject() : null;
+        return claims != null ? claims.get("role", String.class) : null;
     }
 
     public Claims extractClaims(String token) {

@@ -49,13 +49,14 @@ prizm:
   auth:
     jwt:
       secret: ${JWT_SECRET}
-      access-token-expiration: 600000
-      refresh-token-expiration: 604800000
+      access-token-expiration: ${JWT_SECRET_ACCESS_TOKEN_EXPIRATION}
+      refresh-token-expiration: ${JWT_SECRET_REFRESH_TOKEN_EXPIRATION}
     cookie:
       http-only: true
       secure: ${COOKIE_SECURE}
-      same-site: lax
+      same-site: ${COOKIE_SAME_SITE}
       domain: ${COOKIE_DOMAIN}
+      path: ${COOKIE_PATH}
   
   frontend:
     url: ${FRONTEND_URL}
