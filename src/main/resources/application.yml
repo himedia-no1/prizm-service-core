@@ -75,3 +75,7 @@ prizm:
     secret-key: ${MINIO_SECRET_KEY}
     bucket: ${MINIO_BUCKET}
     public-url: ${MINIO_PUBLIC_URL}
+
+translation:
+  api:
+    url: http://localhost:8081/translate # Placeholder URL

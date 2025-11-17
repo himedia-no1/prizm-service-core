@@ -28,7 +28,6 @@ public class TranslationService {
     private final WebClient.Builder webClientBuilder;
     private final MessageRepository messageRepository;
     private final MessageTranslationRepository messageTranslationRepository;
-    private final LanguageRepository languageRepository;
 
     @Value("${translation.api.url}")
     private String apiUrl;
@@ -42,7 +41,7 @@ public class TranslationService {
     }
 
     private Mono<String> findExistingTranslation(Long messageId, String targetLangCode) {
-        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguageCode(messageId, targetLangCode))
+        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguage(messageId, targetLangCode))
                 .subscribeOn(Schedulers.boundedElastic()) // Delegate blocking DB call
                 // 수정된 부분: Optional을 Mono로 올바르게 변환
                 .flatMap(optionalTranslation -> Mono.justOrEmpty(optionalTranslation.map(MessageTranslation::getContent)));
@@ -54,14 +53,14 @@ public class TranslationService {
                         .orElseThrow(() -> new RuntimeException("Message not found with id: " + messageId)))
                 .subscribeOn(Schedulers.boundedElastic());
 
-        // Fetch the language entity
-        Mono<Language> languageMono = Mono.fromCallable(() -> languageRepository.findById(targetLangCode)
-                        .orElseGet(() -> {
-                            Language newLang = new Language();
-                            newLang.setCode(targetLangCode);
-                            return languageRepository.save(newLang);
-                        }))
-                .subscribeOn(Schedulers.boundedElastic());
+        // Fetch the language enum
+        Mono<Language> languageMono = Mono.fromCallable(() -> {
+            try {
+                return Language.valueOf(targetLangCode.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid target language code: " + targetLangCode, e);
+            }
+        }).subscribeOn(Schedulers.boundedElastic());
 
         return messageMono.flatMap(message ->
                 // Call external API
