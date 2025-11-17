@@ -6,9 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import run.prizm.core.security.permission.RequireWorkspaceRole;
 import run.prizm.core.space.category.dto.CategoryCreateRequest;
+import run.prizm.core.space.category.dto.CategoryResponse;
 import run.prizm.core.space.category.dto.CategoryUpdateRequest;
 import run.prizm.core.space.category.dto.CategoryZIndexUpdateRequest;
-import run.prizm.core.space.category.entity.Category;
 import run.prizm.core.space.category.service.CategoryService;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 
@@ -21,22 +21,22 @@ public class CategoryController {
 
     @PostMapping
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Category> createCategory(
+    public ResponseEntity<CategoryResponse> createCategory(
             @PathVariable Long workspaceId,
             @Valid @RequestBody CategoryCreateRequest request
     ) {
-        Category category = categoryService.createCategory(workspaceId, request);
-        return ResponseEntity.ok(category);
+        CategoryResponse response = categoryService.createCategory(workspaceId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{categoryId}")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Category> updateCategory(
+    public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Long categoryId,
             @RequestBody CategoryUpdateRequest request
     ) {
-        Category category = categoryService.updateCategory(categoryId, request);
-        return ResponseEntity.ok(category);
+        CategoryResponse response = categoryService.updateCategory(categoryId, request);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{categoryId}/z-index")

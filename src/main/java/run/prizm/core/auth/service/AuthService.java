@@ -48,16 +48,10 @@ public class AuthService {
             throw new RuntimeException("User is deleted");
         }
 
-        refreshTokenCacheRepository.delete(refreshToken);
-
+        // Rotation 제거: 새로운 Access Token만 발급
         String newAccessToken = jwtService.generateAccessToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken();
 
-        refreshTokenCacheRepository.save(newRefreshToken, user.getId(), tokenData.role());
-        cookieService.setAccessToken(response, newAccessToken);
-        cookieService.setRefreshToken(response, newRefreshToken);
-
-        return new TokenRefreshResponse(newAccessToken, jwtService.getAccessTokenExpirationInSeconds());
+        return new TokenRefreshResponse(newAccessToken);
     }
 
     @Transactional
@@ -66,7 +60,6 @@ public class AuthService {
         if (refreshToken != null) {
             refreshTokenCacheRepository.delete(refreshToken);
         }
-        cookieService.deleteAccessToken(response);
         cookieService.deleteRefreshToken(response);
     }
 
@@ -82,7 +75,6 @@ public class AuthService {
         if (refreshToken != null) {
             refreshTokenCacheRepository.delete(refreshToken);
         }
-        cookieService.deleteAccessToken(response);
         cookieService.deleteRefreshToken(response);
     }
 }

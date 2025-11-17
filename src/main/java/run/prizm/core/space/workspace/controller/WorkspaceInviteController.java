@@ -19,7 +19,7 @@ public class WorkspaceInviteController {
     private final WorkspaceInviteService workspaceInviteService;
 
     @PostMapping("/api/workspaces/{workspaceId}/invites")
-    @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
+    @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER, WorkspaceUserRole.MEMBER})
     public ResponseEntity<WorkspaceInviteCreateResponse> createInvite(
             @PathVariable Long workspaceId,
             @CurrentUser Long userId,
@@ -66,6 +66,14 @@ public class WorkspaceInviteController {
             @CurrentUser Long userId
     ) {
         WorkspaceInviteJoinResponse response = workspaceInviteService.joinByInvite(code, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/invites/{code}")
+    public ResponseEntity<WorkspaceResponse> getWorkspaceByInviteCode(
+            @PathVariable String code
+    ) {
+        WorkspaceResponse response = workspaceInviteService.getWorkspaceByInviteCode(code);
         return ResponseEntity.ok(response);
     }
 }

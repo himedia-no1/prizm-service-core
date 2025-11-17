@@ -19,11 +19,11 @@ public class GroupController {
 
     @PostMapping
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Group> createGroup(
+    public ResponseEntity<GroupResponse> createGroup(
             @PathVariable Long workspaceId,
             @Valid @RequestBody GroupCreateRequest request
     ) {
-        Group group = groupService.createGroup(workspaceId, request);
+        GroupResponse group = groupService.createGroup(workspaceId, request);
         return ResponseEntity.ok(group);
     }
 
@@ -47,11 +47,11 @@ public class GroupController {
 
     @PatchMapping("/{groupId}")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Group> updateGroup(
+    public ResponseEntity<GroupResponse> updateGroup(
             @PathVariable Long groupId,
             @RequestBody GroupUpdateRequest request
     ) {
-        Group group = groupService.updateGroup(groupId, request);
+        GroupResponse group = groupService.updateGroup(groupId, request);
         return ResponseEntity.ok(group);
     }
 

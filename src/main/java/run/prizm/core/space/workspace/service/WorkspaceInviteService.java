@@ -21,6 +21,7 @@ import run.prizm.core.space.channel.entity.ChannelWorkspaceUser;
 import run.prizm.core.space.channel.repository.ChannelRepository;
 import run.prizm.core.space.channel.repository.ChannelWorkspaceUserRepository;
 import run.prizm.core.space.channel.constraint.ChannelWorkspaceUserNotify;
+import run.prizm.core.space.channel.service.ChannelAccessService;
 import run.prizm.core.space.group.entity.Group;
 import run.prizm.core.space.group.entity.GroupWorkspaceUser;
 import run.prizm.core.space.group.repository.GroupRepository;
@@ -45,6 +46,7 @@ public class WorkspaceInviteService {
     private final GroupRepository groupRepository;
     private final GroupWorkspaceUserRepository groupWorkspaceUserRepository;
     private final MinioService minioService;
+    private final ChannelAccessService channelAccessService;
 
     @Transactional
     public WorkspaceInviteCreateResponse createMemberInvite(
@@ -94,13 +96,26 @@ public class WorkspaceInviteService {
             Long channelId,
             List<Long> allowedUserIds
     ) {
-        validateCreator(workspaceId, creatorUserId);
+        WorkspaceUser creator = workspaceUserRepository
+                .findByWorkspaceIdAndUserIdAndDeletedAtIsNull(workspaceId, creatorUserId)
+                .orElseThrow(() -> new RuntimeException("Creator not found"));
 
         Channel channel = channelRepository.findById(channelId)
                 .orElseThrow(() -> new RuntimeException("Channel not found"));
 
         if (!channel.getWorkspace().getId().equals(workspaceId)) {
             throw new RuntimeException("Channel not in workspace");
+        }
+
+        // OWNER, MANAGER는 항상 가능
+        // MEMBER는 해당 채널에 MANAGE 권한이 있어야 가능
+        if (creator.getRole() == WorkspaceUserRole.MEMBER) {
+            String permission = channelAccessService.getChannelPermission(workspaceId, creatorUserId, channelId);
+            if (!"MANAGE".equals(permission)) {
+                throw new RuntimeException("MEMBER requires MANAGE permission on this channel to create guest invite");
+            }
+        } else if (creator.getRole() != WorkspaceUserRole.OWNER && creator.getRole() != WorkspaceUserRole.MANAGER) {
+            throw new RuntimeException("Only OWNER, MANAGER, or MEMBER with MANAGE permission can create guest invite");
         }
 
         if (allowedUserIds == null || allowedUserIds.isEmpty()) {
@@ -271,5 +286,33 @@ public class WorkspaceInviteService {
         if (!isMember) {
             throw new RuntimeException("User not allowed to create invite");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public WorkspaceResponse getWorkspaceByInviteCode(String inviteCode) {
+        WorkspaceInviteCache cache = inviteCacheRepository.find(inviteCode)
+                .orElseThrow(() -> new RuntimeException("Invite not found"));
+
+        if (cache.isExpired()) {
+            throw new RuntimeException("Invite expired");
+        }
+
+        Workspace workspace = workspaceRepository.findById(cache.getWorkspaceId())
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (workspace.getDeletedAt() != null) {
+            throw new RuntimeException("Workspace deleted");
+        }
+
+        String imageUrl = workspace.getImage() != null 
+                ? minioService.getFileUrl(workspace.getImage().getPath()) 
+                : null;
+
+        return new WorkspaceResponse(
+                workspace.getId(),
+                workspace.getName(),
+                imageUrl,
+                workspace.getCreatedAt()
+        );
     }
 }

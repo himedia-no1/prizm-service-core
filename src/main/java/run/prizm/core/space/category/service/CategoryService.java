@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import run.prizm.core.space.category.dto.CategoryCreateRequest;
+import run.prizm.core.space.category.dto.CategoryResponse;
 import run.prizm.core.space.category.dto.CategoryUpdateRequest;
 import run.prizm.core.space.category.dto.CategoryZIndexUpdateRequest;
 import run.prizm.core.space.category.entity.Category;
@@ -23,7 +24,7 @@ public class CategoryService {
     private final WorkspaceRepository workspaceRepository;
 
     @Transactional
-    public Category createCategory(Long workspaceId, CategoryCreateRequest request) {
+    public CategoryResponse createCategory(Long workspaceId, CategoryCreateRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -37,11 +38,13 @@ public class CategoryService {
                                     .zIndex(zIndex)
                                     .build();
 
-        return categoryRepository.save(category);
+        category = categoryRepository.save(category);
+        
+        return toResponse(category);
     }
 
     @Transactional
-    public Category updateCategory(Long categoryId, CategoryUpdateRequest request) {
+    public CategoryResponse updateCategory(Long categoryId, CategoryUpdateRequest request) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
@@ -49,7 +52,9 @@ public class CategoryService {
             category.setName(request.name());
         }
 
-        return categoryRepository.save(category);
+        category = categoryRepository.save(category);
+        
+        return toResponse(category);
     }
 
     @Transactional
@@ -89,5 +94,15 @@ public class CategoryService {
 
         category.setDeletedAt(Instant.now());
         categoryRepository.save(category);
+    }
+    
+    private CategoryResponse toResponse(Category category) {
+        return new CategoryResponse(
+                category.getId(),
+                category.getWorkspace().getId(),
+                category.getName(),
+                category.getZIndex().toPlainString(),
+                category.getCreatedAt()
+        );
     }
 }

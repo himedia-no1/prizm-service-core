@@ -4,7 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -17,6 +17,7 @@ import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 @Component
@@ -28,45 +29,60 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
     private final RefreshTokenCacheRepository refreshTokenCacheRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    @Value("${prizm.frontend.url:}")
-    private String frontendUrl;
+    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         User user = extractUser(authentication);
 
-        String languageParam = getCookieValue(request, HttpCookieOAuth2AuthorizationRequestRepository.LANGUAGE_PARAM_COOKIE_NAME);
-        String inviteCode = getCookieValue(request, HttpCookieOAuth2AuthorizationRequestRepository.INVITE_CODE_PARAM_COOKIE_NAME);
-
-        if (languageParam != null && !languageParam.isEmpty()) {
+        // NEXT_LOCALE 쿠키에서 언어 설정 읽기 및 저장
+        String nextLocale = getCookieValue(request, "NEXT_LOCALE");
+        if (nextLocale != null && !nextLocale.isEmpty()) {
             try {
-                Language language = Language.valueOf(languageParam.toUpperCase());
+                Language language = Language.valueOf(nextLocale.toUpperCase());
                 user.setLanguage(language);
                 userRepository.save(user);
             } catch (IllegalArgumentException e) {
-                // ignore invalid language code
+                // 잘못된 언어 코드는 무시
             }
         }
+
+        // NEXT_LOCALE 쿠키를 유저의 현재 언어로 업데이트하여 브라우저에 전달
+        Language userLanguage = user.getLanguage() != null ? user.getLanguage() : Language.EN;
+        Cookie nextLocaleCookie = new Cookie("NEXT_LOCALE", userLanguage.name().toLowerCase());
+        nextLocaleCookie.setPath("/");
+        nextLocaleCookie.setMaxAge(365 * 24 * 60 * 60); // 1년
+        nextLocaleCookie.setHttpOnly(false); // JavaScript에서 읽을 수 있어야 함
+        response.addCookie(nextLocaleCookie);
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken();
 
         refreshTokenCacheRepository.save(refreshToken, user.getId(), "USER");
-        cookieService.setAccessToken(response, accessToken);
         cookieService.setRefreshToken(response, refreshToken);
-
-        String path = inviteCode != null && !inviteCode.isEmpty()
-                ? "/invite/" + inviteCode
-                : "/login";
-
-        String redirectUrl = (frontendUrl != null && !frontendUrl.isEmpty())
-                ? frontendUrl + path
-                : path;
 
         cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
-        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+        // 마지막 접속 경로 조회 (없으면 null)
+        String lastPath = getLastPath(user.getId());
+
+        // JSON 응답
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        PrintWriter writer = response.getWriter();
+        writer.write("{");
+        writer.write("\"success\":true,");
+        writer.write("\"accessToken\":\"" + accessToken + "\",");
+        if (lastPath != null && !lastPath.isEmpty()) {
+            writer.write("\"redirectPath\":\"" + escapeJson(lastPath) + "\"");
+        } else {
+            writer.write("\"redirectPath\":null");
+        }
+        writer.write("}");
+        writer.flush();
     }
 
     private User extractUser(Authentication authentication) {
@@ -90,5 +106,20 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     .orElse(null);
         }
         return null;
+    }
+
+    private String getLastPath(Long userId) {
+        String key = LAST_PATH_KEY_PREFIX + userId;
+        Object value = redisTemplate.opsForValue().get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 }

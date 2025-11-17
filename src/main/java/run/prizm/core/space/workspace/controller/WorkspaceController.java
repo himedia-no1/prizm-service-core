@@ -40,7 +40,6 @@ public class WorkspaceController {
     }
 
     @GetMapping("/{workspaceId}")
-    @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER, WorkspaceUserRole.MEMBER, WorkspaceUserRole.GUEST})
     public ResponseEntity<WorkspaceResponse> getWorkspace(
             @PathVariable Long workspaceId
     ) {

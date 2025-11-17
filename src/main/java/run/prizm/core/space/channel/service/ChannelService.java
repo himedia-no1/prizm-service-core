@@ -31,7 +31,7 @@ public class ChannelService {
     private final WorkspaceUserRepository workspaceUserRepository;
 
     @Transactional
-    public Channel createChannel(Long workspaceId, Long categoryId, ChannelCreateRequest request) {
+    public ChannelResponse createChannel(Long workspaceId, Long categoryId, ChannelCreateRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -51,7 +51,9 @@ public class ChannelService {
                                  .zIndex(zIndex)
                                  .build();
 
-        return channelRepository.save(channel);
+        channel = channelRepository.save(channel);
+        
+        return toResponse(channel);
     }
 
     @Transactional(readOnly = true)
@@ -76,7 +78,7 @@ public class ChannelService {
     }
 
     @Transactional
-    public Channel updateChannel(Long channelId, ChannelUpdateRequest request) {
+    public ChannelResponse updateChannel(Long channelId, ChannelUpdateRequest request) {
         Channel channel = channelRepository.findById(channelId)
                 .orElseThrow(() -> new RuntimeException("Channel not found"));
 
@@ -88,7 +90,9 @@ public class ChannelService {
             channel.setDescription(request.description());
         }
 
-        return channelRepository.save(channel);
+        channel = channelRepository.save(channel);
+        
+        return toResponse(channel);
     }
 
     @Transactional
@@ -153,5 +157,18 @@ public class ChannelService {
 
         channel.setDeletedAt(Instant.now());
         channelRepository.save(channel);
+    }
+    
+    private ChannelResponse toResponse(Channel channel) {
+        return new ChannelResponse(
+                channel.getId(),
+                channel.getWorkspace().getId(),
+                channel.getCategory() != null ? channel.getCategory().getId() : null,
+                channel.getType(),
+                channel.getName(),
+                channel.getDescription(),
+                channel.getZIndex().toPlainString(),
+                channel.getCreatedAt()
+        );
     }
 }

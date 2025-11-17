@@ -21,12 +21,12 @@ public class ChannelController {
 
     @PostMapping("/api/workspaces/{workspaceId}/categories/{categoryId}/channels")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Channel> createChannel(
+    public ResponseEntity<ChannelResponse> createChannel(
             @PathVariable Long workspaceId,
             @PathVariable Long categoryId,
             @Valid @RequestBody ChannelCreateRequest request
     ) {
-        Channel channel = channelService.createChannel(workspaceId, categoryId, request);
+        ChannelResponse channel = channelService.createChannel(workspaceId, categoryId, request);
         channelAccessService.invalidateWorkspaceCache(workspaceId);
         return ResponseEntity.ok(channel);
     }
@@ -43,12 +43,12 @@ public class ChannelController {
 
     @PatchMapping("/api/workspaces/{workspaceId}/channels/{channelId}")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
-    public ResponseEntity<Channel> updateChannel(
+    public ResponseEntity<ChannelResponse> updateChannel(
             @PathVariable Long workspaceId,
             @PathVariable Long channelId,
             @RequestBody ChannelUpdateRequest request
     ) {
-        Channel channel = channelService.updateChannel(channelId, request);
+        ChannelResponse channel = channelService.updateChannel(channelId, request);
         channelAccessService.invalidateWorkspaceCache(workspaceId);
         return ResponseEntity.ok(channel);
     }

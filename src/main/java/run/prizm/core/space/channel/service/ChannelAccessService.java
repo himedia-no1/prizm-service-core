@@ -117,4 +117,17 @@ public class ChannelAccessService {
     public void invalidateWorkspaceCache(Long workspaceId) {
         // Spring Cache가 자동으로 처리
     }
+    
+    @Transactional(readOnly = true)
+    public String getChannelPermission(Long workspaceId, Long userId, Long channelId) {
+        WorkspaceUser workspaceUser = workspaceUserRepository
+                .findByWorkspaceIdAndUserIdAndDeletedAtIsNull(workspaceId, userId)
+                .orElseThrow(() -> new RuntimeException("Workspace user not found"));
+        
+        Map<Long, ChannelPermission> permissions = permissionCalculator.calculatePermissions(workspaceUser);
+        
+        ChannelPermission permission = permissions.getOrDefault(channelId, ChannelPermission.NONE);
+        
+        return permission.name();
+    }
 }

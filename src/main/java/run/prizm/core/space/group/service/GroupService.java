@@ -39,7 +39,7 @@ public class GroupService {
     private final ChannelAccessService channelAccessService;
 
     @Transactional
-    public Group createGroup(Long workspaceId, GroupCreateRequest request) {
+    public GroupResponse createGroup(Long workspaceId, GroupCreateRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -48,7 +48,9 @@ public class GroupService {
                            .name(request.name())
                            .build();
 
-        return groupRepository.save(group);
+        group = groupRepository.save(group);
+        
+        return toResponse(group);
     }
 
     @Transactional(readOnly = true)
@@ -113,7 +115,7 @@ public class GroupService {
     }
 
     @Transactional
-    public Group updateGroup(Long groupId, GroupUpdateRequest request) {
+    public GroupResponse updateGroup(Long groupId, GroupUpdateRequest request) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
@@ -158,7 +160,18 @@ public class GroupService {
 
         channelAccessService.invalidateWorkspaceCache(group.getWorkspace().getId());
 
-        return groupRepository.save(group);
+        group = groupRepository.save(group);
+        
+        return toResponse(group);
+    }
+    
+    private GroupResponse toResponse(Group group) {
+        return new GroupResponse(
+                group.getId(),
+                group.getWorkspace().getId(),
+                group.getName(),
+                group.getCreatedAt()
+        );
     }
 
     @Transactional
