@@ -32,7 +32,7 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
                 ? "/invite/" + inviteCode
                 : "/login";
 
-        String frontendUrl = frontendProperties.getUrl();
+        String frontendUrl = frontendProperties.getRedirectUrl();
         String redirectUrl = (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;

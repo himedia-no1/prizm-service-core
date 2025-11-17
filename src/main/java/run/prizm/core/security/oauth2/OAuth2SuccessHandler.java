@@ -77,7 +77,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private String buildRedirectUrl(String inviteCode, Long userId) {
         String redirectPath = determineRedirectPath(inviteCode, userId);
-        String frontendUrl = frontendProperties.getUrl();
+        String frontendUrl = frontendProperties.getRedirectUrl();
         return (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;

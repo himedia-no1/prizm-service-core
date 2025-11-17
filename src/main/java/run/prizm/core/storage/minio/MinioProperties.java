@@ -14,12 +14,8 @@ public class MinioProperties {
     private String secretKey;
     private String bucket;
     private String publicUrl;
-    
+
     public String getInternalUrl() {
         return "http://" + host + ":" + port;
-    }
-    
-    public String getPublicUrl() {
-        return publicUrl;
     }
 }

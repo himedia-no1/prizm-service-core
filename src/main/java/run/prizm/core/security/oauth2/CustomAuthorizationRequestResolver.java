@@ -53,7 +53,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
         String originalRedirectUri = authorizationRequest.getRedirectUri();
         String path = originalRedirectUri.substring(originalRedirectUri.indexOf("/api/"));
-        String frontendRedirectUri = frontendProperties.getUrl() + path;
+        String frontendRedirectUri = frontendProperties.getRedirectUrl() + path;
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
                                          .redirectUri(frontendRedirectUri)

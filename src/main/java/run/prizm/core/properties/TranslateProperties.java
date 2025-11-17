@@ -6,11 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "prizm.frontend")
-public class FrontendProperties {
+@ConfigurationProperties(prefix = "prizm.translate")
+public class TranslateProperties {
 
     /**
-     * 프론트엔드 URL
+     * Translation API endpoint
      */
-    private String redirectUrl;
+    private String apiUrl;
 }

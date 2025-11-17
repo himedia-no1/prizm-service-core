@@ -3,7 +3,6 @@ package run.prizm.core.message.service;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,6 +15,7 @@ import run.prizm.core.message.entity.Message;
 import run.prizm.core.message.entity.MessageTranslation;
 import run.prizm.core.message.repository.MessageRepository;
 import run.prizm.core.message.repository.MessageTranslationRepository;
+import run.prizm.core.properties.TranslateProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,9 +28,7 @@ public class TranslationService {
     private final WebClient.Builder webClientBuilder;
     private final MessageRepository messageRepository;
     private final MessageTranslationRepository messageTranslationRepository;
-
-    @Value("${translation.api.url}")
-    private String apiUrl;
+    private final TranslateProperties translateProperties;
 
     @Transactional(readOnly = true)
     public Mono<String> getOrTranslateMessage(Long messageId, String targetLangCode) {
@@ -86,7 +84,7 @@ public class TranslationService {
     }
 
     private Mono<String> callExternalTranslationApi(String text, String targetLang) {
-        WebClient webClient = webClientBuilder.baseUrl(apiUrl)
+        WebClient webClient = webClientBuilder.baseUrl(translateProperties.getApiUrl())
                                               .build();
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", text);

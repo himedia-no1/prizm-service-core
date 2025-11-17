@@ -65,17 +65,18 @@ prizm:
       domain: ${COOKIE_DOMAIN}
       path: /api
 
-  frontend:
-    url: ${FRONTEND_URL}
-
   minio:
     host: ${MINIO_HOST}
     port: ${MINIO_PORT}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     bucket: file
+    # local test only
     public-url: ${MINIO_PUBLIC_URL}
 
-translation:
-  api:
-    url: http://localhost:8081/translate # Placeholder URL
+  frontend:
+    # local test only
+    redirect-url: ${FRONTEND_REDIRECT_URL}
+
+  translate:
+    api-url: ${TRANSLATE_API_URL}
