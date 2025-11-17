@@ -6,5 +6,5 @@ import run.prizm.core.message.entity.MessageTranslation;
 import java.util.Optional;
 
 public interface MessageTranslationRepository extends JpaRepository<MessageTranslation, Long> {
-    Optional<MessageTranslation> findByMessageIdAndLanguageCode(Long messageId, String languageCode);
+    Optional<MessageTranslation> findByMessageIdAndLanguage(Long messageId, String languageCode);
 }
