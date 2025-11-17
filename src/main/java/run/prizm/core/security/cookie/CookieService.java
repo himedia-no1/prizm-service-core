@@ -2,53 +2,36 @@ package run.prizm.core.security.cookie;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import run.prizm.core.properties.AuthProperties;
 
 import java.util.Arrays;
 
 @Component
+@RequiredArgsConstructor
 public class CookieService {
 
-    @Value("${prizm.auth.jwt.access-token-expiration}")
-    private long accessTokenExpiration;
-
-    @Value("${prizm.auth.jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
-
-    @Value("${prizm.auth.cookie.http-only}")
-    private boolean httpOnly;
-
-    @Value("${prizm.auth.cookie.secure}")
-    private boolean secure;
-
-    @Value("${prizm.auth.cookie.same-site}")
-    private String sameSite;
-
-    @Value("${prizm.auth.cookie.domain:}")
-    private String domain;
-
-    @Value("${prizm.auth.cookie.path:/}")
-    private String path;
+    private final AuthProperties authProperties;
 
     public void setAccessToken(HttpServletResponse response, String token) {
-        String cookieHeader = buildSetCookieHeader("access_token", token, getAccessTokenMaxAge(), path);
+        String cookieHeader = buildSetCookieHeader("access_token", token, getAccessTokenMaxAge(), authProperties.getCookie().getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void setRefreshToken(HttpServletResponse response, String token) {
-        String cookieHeader = buildSetCookieHeader("refresh_token", token, getRefreshTokenMaxAge(), path);
+        String cookieHeader = buildSetCookieHeader("refresh_token", token, getRefreshTokenMaxAge(), authProperties.getCookie().getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void deleteAccessToken(HttpServletResponse response) {
-        String cookieHeader = buildDeleteCookieHeader("access_token", path);
+        String cookieHeader = buildDeleteCookieHeader("access_token", authProperties.getCookie().getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
     public void deleteRefreshToken(HttpServletResponse response) {
-        String cookieHeader = buildDeleteCookieHeader("refresh_token", path);
+        String cookieHeader = buildDeleteCookieHeader("refresh_token", authProperties.getCookie().getPath());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieHeader);
     }
 
@@ -92,27 +75,27 @@ public class CookieService {
     }
 
     private int getAccessTokenMaxAge() {
-        return (int) (accessTokenExpiration / 1000);
+        return (int) (authProperties.getJwt().getAccessTokenExpiration() / 1000);
     }
 
     private int getRefreshTokenMaxAge() {
-        return (int) (refreshTokenExpiration / 1000);
+        return (int) (authProperties.getJwt().getRefreshTokenExpiration() / 1000);
     }
 
     private void appendCookieAttributes(StringBuilder header) {
-        if (httpOnly) {
+        if (authProperties.getCookie().getHttpOnly()) {
             header.append("; HttpOnly");
         }
-        if (secure) {
+        if (authProperties.getCookie().getSecure()) {
             header.append("; Secure");
         }
-        if (isNotEmpty(sameSite)) {
+        if (isNotEmpty(authProperties.getCookie().getSameSite())) {
             header.append("; SameSite=")
-                  .append(sameSite);
+                  .append(authProperties.getCookie().getSameSite());
         }
-        if (isNotEmpty(domain)) {
+        if (isNotEmpty(authProperties.getCookie().getDomain())) {
             header.append("; Domain=")
-                  .append(domain);
+                  .append(authProperties.getCookie().getDomain());
         }
     }
 

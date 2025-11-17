@@ -4,8 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import run.prizm.core.properties.AuthProperties;
 import run.prizm.core.user.entity.User;
 
 import javax.crypto.SecretKey;
@@ -13,21 +14,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${prizm.auth.jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${prizm.auth.jwt.access-token-expiration}")
-    private long accessTokenExpiration;
-
-    @Value("${prizm.auth.jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
+    private final AuthProperties authProperties;
 
     public String generateAccessToken(User user) {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiration = new Date(now + accessTokenExpiration);
+        Date expiration = new Date(now + authProperties.getJwt().getAccessTokenExpiration());
 
         SecretKey key = getSigningKey();
 
@@ -43,7 +38,7 @@ public class JwtService {
     public String generateRefreshToken() {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
-        Date expiration = new Date(now + refreshTokenExpiration);
+        Date expiration = new Date(now + authProperties.getJwt().getRefreshTokenExpiration());
 
         SecretKey key = getSigningKey();
 
@@ -55,11 +50,11 @@ public class JwtService {
     }
 
     public long getAccessTokenExpirationInSeconds() {
-        return accessTokenExpiration / 1000;
+        return authProperties.getJwt().getAccessTokenExpiration() / 1000;
     }
 
     public long getRefreshTokenExpirationInSeconds() {
-        return refreshTokenExpiration / 1000;
+        return authProperties.getJwt().getRefreshTokenExpiration() / 1000;
     }
 
     public boolean validateToken(String token) {
@@ -106,6 +101,6 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(authProperties.getJwt().getSecret().getBytes(StandardCharsets.UTF_8));
     }
 }

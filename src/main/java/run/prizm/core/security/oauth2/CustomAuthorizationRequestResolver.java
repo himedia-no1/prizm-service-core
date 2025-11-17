@@ -1,27 +1,29 @@
 package run.prizm.core.security.oauth2;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
+import run.prizm.core.properties.FrontendProperties;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
     private final OAuth2AuthorizationRequestResolver defaultResolver;
+    private final FrontendProperties frontendProperties;
 
-    @Value("${prizm.frontend.url}")
-    private String frontendUrl;
-
-    public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository) {
+    public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository,
+                                              FrontendProperties frontendProperties) {
         this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(
                 clientRegistrationRepository, "/api/auth/oauth2");
+        this.frontendProperties = frontendProperties;
     }
 
     @Override
@@ -53,7 +55,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
         String originalRedirectUri = authorizationRequest.getRedirectUri();
         String path = originalRedirectUri.substring(originalRedirectUri.indexOf("/api/"));
-        String frontendRedirectUri = frontendUrl + path;
+        String frontendRedirectUri = frontendProperties.getUrl() + path;
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
                 .redirectUri(frontendRedirectUri)

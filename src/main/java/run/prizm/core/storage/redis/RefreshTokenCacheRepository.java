@@ -1,9 +1,9 @@
 package run.prizm.core.storage.redis;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+import run.prizm.core.properties.AuthProperties;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -15,17 +15,15 @@ public class RefreshTokenCacheRepository {
 
     private static final String KEY_PREFIX = "refresh:";
 
-    @Value("${prizm.auth.jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
-
+    private final AuthProperties authProperties;
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void save(String refreshToken, Long userId, String role) {
         Map<String, Object> data = new HashMap<>();
         data.put("role", role);
         data.put("id", userId.toString());
-        
-        Duration ttl = Duration.ofMillis(refreshTokenExpiration);
+
+        Duration ttl = Duration.ofMillis(authProperties.getJwt().getRefreshTokenExpiration());
         redisTemplate.opsForHash().putAll(KEY_PREFIX + refreshToken, data);
         redisTemplate.expire(KEY_PREFIX + refreshToken, ttl);
     }

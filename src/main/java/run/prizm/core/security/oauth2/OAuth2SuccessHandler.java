@@ -4,13 +4,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import run.prizm.core.common.constraint.Language;
+import run.prizm.core.properties.FrontendProperties;
 import run.prizm.core.security.cookie.CookieService;
 import run.prizm.core.security.cookie.CookieUtils;
 import run.prizm.core.security.jwt.JwtService;
@@ -30,9 +30,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final UserRepository userRepository;
     private final RefreshTokenCacheRepository refreshTokenCacheRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    @Value("${prizm.frontend.url}")
-    private String frontendUrl;
+    private final FrontendProperties frontendProperties;
 
     private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
 
@@ -77,6 +75,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private String buildRedirectUrl(String inviteCode, Long userId) {
         String redirectPath = determineRedirectPath(inviteCode, userId);
+        String frontendUrl = frontendProperties.getUrl();
         return (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;
