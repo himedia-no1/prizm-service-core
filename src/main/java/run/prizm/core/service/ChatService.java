@@ -23,7 +23,7 @@ public class ChatService {
     public void sendMessage(Message message) {
         // Ensure the channel exists before proceeding
         channelRepository.findById(message.getChannel().getId()).orElseThrow(
-                () -> new RuntimeException("Channel not found with id: " + message.getChannelId()));
+                () -> new RuntimeException("Channel not found with id: " + message.getChannel().getId()));
 
         // Save the message to the database
         Message savedMessage = messageRepository.save(message);
