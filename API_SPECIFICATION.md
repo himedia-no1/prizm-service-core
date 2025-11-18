@@ -206,44 +206,6 @@ refresh token 쿠키로 새 access token 발급
 
 ---
 
-### POST /api/users/last-path
-사용자 마지막 방문 경로 저장
-
-**요청**
-- Header: `Authorization: Bearer {token}`
-- Body:
-```json
-{
-  "path": "/workspace/1/channel/5"
-}
-```
-- `path` (문자열, 필수)
-
-**응답 204**
-내용 없음
-
-**에러**: A001, A003, A004, C001, U001, U004, R001
-
----
-
-### GET /api/users/last-path
-사용자 마지막 방문 경로 조회 (저장된 값이 없으면 `/workspace` 반환)
-
-**요청**
-- Header: `Authorization: Bearer {token}`
-
-**응답 200**
-```json
-{
-  "path": "/workspace/1/channel/5"
-}
-```
-- 저장된 경로가 없으면 `"/workspace"` 반환
-
-**에러**: A001, A003, A004, U001, U004, R001
-
----
-
 ## 알림 API
 
 ### GET /api/notifications
@@ -613,7 +575,6 @@ refresh token 쿠키로 새 access token 발급
 {
   "expiresInSeconds": 86400,
   "maxUses": 10,
-  "allowedUserId": null,
   "allowedUserIds": [1, 2, 3],
   "autoJoinGroupIds": [5],
   "channelId": null
@@ -621,7 +582,6 @@ refresh token 쿠키로 새 access token 발급
 ```
 - `expiresInSeconds` (숫자, 필수, 최소: 1)
 - `maxUses` (숫자, 필수, 최소: 1)
-- `allowedUserId` (숫자, 선택): 단일 사용자 제한
 - `allowedUserIds` (배열, 선택): 복수 사용자 제한
 - `autoJoinGroupIds` (배열, 선택): 자동 참여 그룹
 - `channelId` (숫자, 선택): 게스트 초대용 (제공시 게스트 초대 생성)
@@ -1189,7 +1149,7 @@ refresh token 쿠키로 새 access token 발급
 
 **엔드포인트**: `/chat.translate`
 **프로토콜**: WebSocket (STOMP)
-**응답 목적지**: `/queue/translate`
+**응답 목적지**: `/user/queue/translate`
 
 **요청**
 ```json

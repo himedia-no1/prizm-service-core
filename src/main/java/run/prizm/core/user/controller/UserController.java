@@ -38,20 +38,4 @@ public class UserController {
         UserProfileResponse response = userService.updateLanguage(userId, request);
         return ResponseEntity.ok(response);
     }
-
-    @PostMapping("/last-path")
-    public ResponseEntity<Void> saveLastPath(
-            @CurrentUser Long userId,
-            @Valid @RequestBody UserLastPathRequest request
-    ) {
-        userService.saveLastPath(userId, request);
-        return ResponseEntity.noContent()
-                             .build();
-    }
-
-    @GetMapping("/last-path")
-    public ResponseEntity<UserLastPathResponse> getLastPath(@CurrentUser Long userId) {
-        UserLastPathResponse response = userService.getLastPath(userId);
-        return ResponseEntity.ok(response);
-    }
 }

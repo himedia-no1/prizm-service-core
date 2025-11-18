@@ -1,7 +1,6 @@
 package run.prizm.core.user.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import run.prizm.core.common.constant.FileDirectory;
@@ -17,10 +16,8 @@ import run.prizm.core.user.repository.UserRepository;
 @RequiredArgsConstructor
 public class UserService {
 
-    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
     private final UserRepository userRepository;
     private final ImageUploadHelper imageUploadHelper;
-    private final RedisTemplate<String, Object> redisTemplate;
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
@@ -71,22 +68,5 @@ public class UserService {
         userRepository.save(user);
 
         return getProfile(userId);
-    }
-
-    public void saveLastPath(Long userId, UserLastPathRequest request) {
-        String key = LAST_PATH_KEY_PREFIX + userId;
-        redisTemplate.opsForValue()
-                     .set(key, request.path());
-    }
-
-    public UserLastPathResponse getLastPath(Long userId) {
-        String key = LAST_PATH_KEY_PREFIX + userId;
-        String path = (String) redisTemplate.opsForValue()
-                                            .get(key);
-        // Redis에 저장된 값이 없으면 기본값 반환
-        if (path == null || path.isEmpty()) {
-            path = "/workspace";
-        }
-        return new UserLastPathResponse(path);
     }
 }

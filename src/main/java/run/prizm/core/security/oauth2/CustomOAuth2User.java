@@ -16,19 +16,30 @@ public class CustomOAuth2User implements OAuth2User, OidcUser {
 
     @Getter
     private final User user;
+    @Getter
+    private final boolean newUser;
     private final Map<String, Object> attributes;
     private final OidcIdToken idToken;
     private final OidcUserInfo userInfo;
 
     public CustomOAuth2User(User user, Map<String, Object> attributes) {
-        this(user, attributes, null, null);
+        this(user, attributes, null, null, false);
+    }
+
+    public CustomOAuth2User(User user, Map<String, Object> attributes, boolean newUser) {
+        this(user, attributes, null, null, newUser);
     }
 
     public CustomOAuth2User(User user, Map<String, Object> attributes, OidcIdToken idToken, OidcUserInfo userInfo) {
+        this(user, attributes, idToken, userInfo, false);
+    }
+
+    public CustomOAuth2User(User user, Map<String, Object> attributes, OidcIdToken idToken, OidcUserInfo userInfo, boolean newUser) {
         this.user = user;
         this.attributes = attributes;
         this.idToken = idToken;
         this.userInfo = userInfo;
+        this.newUser = newUser;
     }
 
     @Override

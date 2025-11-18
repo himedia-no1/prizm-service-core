@@ -1,6 +1,5 @@
 package run.prizm.core.security.oauth2;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -9,8 +8,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import run.prizm.core.common.constraint.Language;
 import run.prizm.core.common.exception.BusinessException;
 import run.prizm.core.common.exception.ErrorCode;
@@ -42,10 +39,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
         validateUserData(userData, registrationId);
 
-        String languageParam = getLanguageFromRequest();
-        Language requestLanguage = parseLanguage(languageParam);
-        User user = authenticateWithOAuth2(registrationId, userData, requestLanguage);
-        return createOAuth2User(user, oAuth2User.getAttributes());
+        AuthenticationResult authenticationResult = authenticateWithOAuth2(registrationId, userData);
+        return createOAuth2User(authenticationResult.user(), oAuth2User.getAttributes(), authenticationResult.isNewUser());
     }
 
     private OAuth2AttributeExtractor findExtractor(String provider) {
@@ -55,22 +50,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                          .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
     }
 
-    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData, Language requestLanguage) {
+    private AuthenticationResult authenticateWithOAuth2(String registrationId, OAuth2UserData userData) {
         UserAuthProvider userAuthProvider = UserAuthProvider.valueOf(registrationId.toUpperCase());
         return userRepository.findByAuthProviderAndOpenidSub(userAuthProvider, userData.providerId())
                              .map(user -> {
                                  user.setName(userData.name());
                                  user.setEmail(userData.email());
-
-                                 if (requestLanguage != null && user.getLanguage() != requestLanguage) {
-                                     user.setLanguage(requestLanguage);
-                                 }
-
-                                 return userRepository.save(user);
+                                 return new AuthenticationResult(userRepository.save(user), false);
                              })
                              .orElseGet(() -> {
-                                 Language language = requestLanguage != null ? requestLanguage : Language.EN;
-
                                  File profileImage = null;
                                  if (userData.profileImage() != null && !userData.profileImage()
                                                                                  .isEmpty()) {
@@ -86,40 +74,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                                  .image(profileImage)
                                                  .name(userData.name())
                                                  .email(userData.email())
-                                                 .language(language)
+                                                 .language(Language.EN)
                                                  .active(true)
                                                  .build();
-                                 return userRepository.save(user);
+                                 return new AuthenticationResult(userRepository.save(user), true);
                              });
     }
 
-    private String getLanguageFromRequest() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            return request.getParameter("lang");
-        }
-        return null;
-    }
-
-    private OAuth2User createOAuth2User(User user, Map<String, Object> attributes) {
-        return new CustomOAuth2User(user, attributes);
-    }
-
-    private Language parseLanguage(String languageParam) {
-        if (languageParam == null || languageParam.isEmpty()) {
-            return null;
-        }
-        try {
-            return Language.from(languageParam);
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
+    private OAuth2User createOAuth2User(User user, Map<String, Object> attributes, boolean newUser) {
+        return new CustomOAuth2User(user, attributes, newUser);
     }
 
     private void validateUserData(OAuth2UserData userData, String provider) {
         if (!StringUtils.hasText(userData.email()) || !StringUtils.hasText(userData.name())) {
             throw new BusinessException(ErrorCode.INVALID_AUTHENTICATION, "Missing required profile information from " + provider);
         }
+    }
+
+    private record AuthenticationResult(User user, boolean isNewUser) {
     }
 }

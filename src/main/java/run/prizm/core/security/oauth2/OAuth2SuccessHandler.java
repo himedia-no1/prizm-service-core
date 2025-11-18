@@ -4,7 +4,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -26,84 +25,89 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private static final String LAST_PATH_KEY_PREFIX = "user:last_path:";
+    private static final String NEXT_LOCALE_COOKIE = "NEXT_LOCALE";
+    private static final String DEFAULT_ROLE = "USER";
     private final JwtService jwtService;
     private final CookieService cookieService;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
     private final RefreshTokenCacheRepository refreshTokenCacheRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final FrontendProperties frontendProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-        User user = extractUser(authentication);
+        UserContext userContext = extractUser(authentication);
+        User user = userContext.user();
 
-        handleLanguageSetting(request, response, user);
+        handleLanguageSetting(request, response, userContext);
 
         String refreshToken = jwtService.generateRefreshToken();
-        refreshTokenCacheRepository.save(refreshToken, user.getId(), "USER");
+        String role = resolveRole(user);
+        refreshTokenCacheRepository.save(refreshToken, user.getId(), role);
         cookieService.setRefreshToken(response, refreshToken);
 
         String inviteCode = CookieUtils.getCookieValue(request, HttpCookieOAuth2AuthorizationRequestRepository.INVITE_CODE_PARAM_COOKIE_NAME);
 
         cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
-        String redirectUrl = buildRedirectUrl(inviteCode, user.getId());
+        String redirectUrl = buildRedirectUrl(inviteCode);
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 
-    private void handleLanguageSetting(HttpServletRequest request, HttpServletResponse response, User user) {
+    private void handleLanguageSetting(HttpServletRequest request, HttpServletResponse response, UserContext userContext) {
+        User user = userContext.user();
+        String nextLocale = CookieUtils.getCookieValue(request, NEXT_LOCALE_COOKIE);
+        Language requestedLanguage = parseLanguage(nextLocale);
+        boolean updated = false;
+
+        if (userContext.isNewUser() && requestedLanguage != null && user.getLanguage() != requestedLanguage) {
+            user.setLanguage(requestedLanguage);
+            updated = true;
+        }
+
         if (user.getLanguage() == null) {
-            String nextLocale = CookieUtils.getCookieValue(request, "NEXT_LOCALE");
-            Language parsedLanguage = parseLanguage(nextLocale);
-            if (parsedLanguage != null) {
-                user.setLanguage(parsedLanguage);
-                userRepository.save(user);
-            }
+            Language fallbackLanguage = requestedLanguage != null ? requestedLanguage : Language.EN;
+            user.setLanguage(fallbackLanguage);
+            updated = true;
+        }
+
+        if (updated) {
+            userRepository.save(user);
         }
 
         Language userLanguage = user.getLanguage() != null ? user.getLanguage() : Language.EN;
-        Cookie nextLocaleCookie = new Cookie("NEXT_LOCALE", userLanguage.name()
-                                                                        .toLowerCase());
+        Cookie nextLocaleCookie = new Cookie(NEXT_LOCALE_COOKIE, userLanguage.name()
+                                                                             .toLowerCase());
         nextLocaleCookie.setPath("/");
         nextLocaleCookie.setMaxAge(365 * 24 * 60 * 60);
         nextLocaleCookie.setHttpOnly(false);
         response.addCookie(nextLocaleCookie);
     }
 
-    private String buildRedirectUrl(String inviteCode, Long userId) {
-        String redirectPath = determineRedirectPath(inviteCode, userId);
+    private String buildRedirectUrl(String inviteCode) {
+        String redirectPath = determineRedirectPath(inviteCode);
         String frontendUrl = frontendProperties.getRedirectUrl();
         return (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;
     }
 
-    private String determineRedirectPath(String inviteCode, Long userId) {
+    private String determineRedirectPath(String inviteCode) {
         if (inviteCode != null && !inviteCode.isEmpty()) {
             return "/invite/" + inviteCode;
         }
-        String lastPath = getLastPath(userId);
-        return (lastPath != null && !lastPath.isEmpty()) ? lastPath : "/workspace";
+        return "/login";
     }
 
-    private User extractUser(Authentication authentication) {
+    private UserContext extractUser(Authentication authentication) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomOAuth2User customUser) {
-            return customUser.getUser();
+            return new UserContext(customUser.getUser(), customUser.isNewUser());
         }
         if (principal instanceof OidcUser) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-    }
-
-    private String getLastPath(Long userId) {
-        String key = LAST_PATH_KEY_PREFIX + userId;
-        Object value = redisTemplate.opsForValue()
-                                    .get(key);
-        return value != null ? value.toString() : null;
     }
 
     private Language parseLanguage(String languageParam) {
@@ -115,5 +119,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    private String resolveRole(User user) {
+        return DEFAULT_ROLE;
+    }
+
+    private record UserContext(User user, boolean isNewUser) {
     }
 }

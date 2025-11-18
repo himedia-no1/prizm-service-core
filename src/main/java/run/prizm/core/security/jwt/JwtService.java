@@ -17,9 +17,17 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtService {
 
+    private static final String ROLE_CLAIM = "role";
+    private static final String ID_CLAIM = "id";
+    private static final String DEFAULT_ROLE = "USER";
+
     private final AuthProperties authProperties;
 
     public String generateAccessToken(User user) {
+        return generateAccessToken(user.getId(), determineRole(user));
+    }
+
+    public String generateAccessToken(Long userId, String role) {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
         Date expiration = new Date(now + authProperties.getJwt()
@@ -28,8 +36,8 @@ public class JwtService {
         SecretKey key = getSigningKey();
 
         return Jwts.builder()
-                   .claim("role", "USER")
-                   .claim("id", user.getId())
+                   .claim(ROLE_CLAIM, role)
+                   .claim(ID_CLAIM, userId)
                    .issuedAt(issuedAt)
                    .expiration(expiration)
                    .signWith(key)
@@ -79,7 +87,7 @@ public class JwtService {
         if (claims == null) {
             return null;
         }
-        Object idObj = claims.get("id");
+        Object idObj = claims.get(ID_CLAIM);
         if (idObj instanceof Number) {
             return ((Number) idObj).longValue();
         }
@@ -88,7 +96,7 @@ public class JwtService {
 
     public String getRoleFromToken(String token) {
         Claims claims = extractClaims(token);
-        return claims != null ? claims.get("role", String.class) : null;
+        return claims != null ? claims.get(ROLE_CLAIM, String.class) : null;
     }
 
     public Claims extractClaims(String token) {
@@ -104,9 +112,19 @@ public class JwtService {
         }
     }
 
+    public boolean isExpired(Claims claims) {
+        Date expiration = claims.getExpiration();
+        return expiration == null || expiration.before(new Date());
+    }
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(authProperties.getJwt()
                                                 .getSecret()
                                                 .getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String determineRole(User user) {
+        // USER 는 기본 권한이며, 향후 ADMIN 등 추가 시 이 로직을 확장한다.
+        return DEFAULT_ROLE;
     }
 }

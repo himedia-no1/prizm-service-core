@@ -15,7 +15,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
 
     public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request";
     public static final String REDIRECT_URI_PARAM_COOKIE_NAME = "redirect_uri";
-    public static final String LANGUAGE_PARAM_COOKIE_NAME = "language";
     public static final String INVITE_CODE_PARAM_COOKIE_NAME = "invite_code";
     private static final int COOKIE_EXPIRE_SECONDS = 180;
 
@@ -40,11 +39,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
             addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUri, COOKIE_EXPIRE_SECONDS);
         }
 
-        String language = request.getParameter("lang");
-        if (language != null && !language.isBlank()) {
-            addCookie(response, LANGUAGE_PARAM_COOKIE_NAME, language, COOKIE_EXPIRE_SECONDS);
-        }
-
         String inviteCode = request.getParameter("invite");
         if (inviteCode != null && !inviteCode.isBlank()) {
             addCookie(response, INVITE_CODE_PARAM_COOKIE_NAME, inviteCode, COOKIE_EXPIRE_SECONDS);
@@ -59,7 +53,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
     public void removeAuthorizationRequestCookies(HttpServletRequest request, HttpServletResponse response) {
         deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
         deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
-        deleteCookie(request, response, LANGUAGE_PARAM_COOKIE_NAME);
         deleteCookie(request, response, INVITE_CODE_PARAM_COOKIE_NAME);
     }
 

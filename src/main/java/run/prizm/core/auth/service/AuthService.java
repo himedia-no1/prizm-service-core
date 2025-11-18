@@ -49,7 +49,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
-        String newAccessToken = jwtService.generateAccessToken(user);
+        String role = tokenData.role() != null ? tokenData.role() : "USER";
+        String newAccessToken = jwtService.generateAccessToken(user.getId(), role);
 
         return new TokenRefreshResponse(newAccessToken);
     }

@@ -32,12 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractTokenFromHeader(request);
 
-        if (token != null && jwtService.validateToken(token)) {
+        if (token != null) {
             Claims claims = jwtService.extractClaims(token);
 
-            if (claims != null) {
+            if (claims != null && !jwtService.isExpired(claims)) {
+                Long userId = extractUserId(claims);
                 String role = claims.get("role", String.class);
-                if (role != null) {
+
+                if (userId != null && role != null) {
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(claims, null, Collections.singletonList(authority));
@@ -45,6 +47,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext()
                                          .setAuthentication(authentication);
+                    request.setAttribute("userId", userId);
+                    request.setAttribute("userRole", role);
                 }
             }
         }
@@ -56,6 +60,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (bearerToken != null && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(BEARER_PREFIX.length());
+        }
+        return null;
+    }
+
+    private Long extractUserId(Claims claims) {
+        Object idObj = claims.get("id");
+        if (idObj instanceof Number number) {
+            return number.longValue();
+        }
+        if (idObj instanceof String idStr) {
+            try {
+                return Long.parseLong(idStr);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
         }
         return null;
     }

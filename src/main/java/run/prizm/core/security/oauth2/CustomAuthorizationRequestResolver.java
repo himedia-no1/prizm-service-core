@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import run.prizm.core.properties.FrontendProperties;
 
 import java.util.HashMap;
@@ -41,23 +42,29 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
         Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
 
-        String lang = request.getParameter("lang");
         String inviteCode = request.getParameter("invite");
 
-        if (lang != null) {
-            additionalParameters.put("lang", lang);
-        }
         if (inviteCode != null) {
             additionalParameters.put("invite", inviteCode);
         }
 
         String originalRedirectUri = authorizationRequest.getRedirectUri();
-        String path = originalRedirectUri.substring(originalRedirectUri.indexOf("/api/"));
-        String frontendRedirectUri = frontendProperties.getRedirectUrl() + path;
+        String frontendRedirectUri = resolveRedirectUri(originalRedirectUri);
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
                                          .redirectUri(frontendRedirectUri)
                                          .additionalParameters(additionalParameters)
                                          .build();
+    }
+
+    private String resolveRedirectUri(String originalRedirectUri) {
+        String frontendUrl = frontendProperties.getRedirectUrl();
+        if (!StringUtils.hasText(frontendUrl)) {
+            return originalRedirectUri;
+        }
+
+        int apiIndex = originalRedirectUri.indexOf("/api/");
+        String path = apiIndex >= 0 ? originalRedirectUri.substring(apiIndex) : originalRedirectUri;
+        return frontendUrl + path;
     }
 }
