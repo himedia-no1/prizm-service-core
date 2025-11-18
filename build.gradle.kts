@@ -56,8 +56,8 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    // --- MinIO ---
-    implementation("io.minio:minio:8.5.7")
+    // --- AWS S3 ---
+    implementation("software.amazon.awssdk:s3:2.29.25")
 
     // --- Reactor Netty ---
     implementation("io.projectreactor.netty:reactor-netty")

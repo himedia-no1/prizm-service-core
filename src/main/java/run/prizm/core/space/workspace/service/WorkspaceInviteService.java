@@ -25,7 +25,7 @@ import run.prizm.core.space.workspace.entity.WorkspaceUser;
 import run.prizm.core.space.workspace.repository.WorkspaceInviteCacheRepository;
 import run.prizm.core.space.workspace.repository.WorkspaceRepository;
 import run.prizm.core.space.workspace.repository.WorkspaceUserRepository;
-import run.prizm.core.storage.minio.MinioService;
+import run.prizm.core.storage.s3.S3Service;
 import run.prizm.core.user.entity.User;
 import run.prizm.core.user.repository.UserRepository;
 
@@ -46,7 +46,7 @@ public class WorkspaceInviteService {
     private final ChannelWorkspaceUserRepository channelWorkspaceUserRepository;
     private final GroupRepository groupRepository;
     private final GroupWorkspaceUserRepository groupWorkspaceUserRepository;
-    private final MinioService minioService;
+    private final S3Service s3Service;
     private final ChannelAccessService channelAccessService;
 
     @Transactional
@@ -316,8 +316,8 @@ public class WorkspaceInviteService {
         }
 
         String imageUrl = workspace.getImage() != null
-                ? minioService.getFileUrl(workspace.getImage()
-                                                   .getPath())
+                ? s3Service.getFileUrl(workspace.getImage()
+                                                .getPath())
                 : null;
 
         return new WorkspaceResponse(

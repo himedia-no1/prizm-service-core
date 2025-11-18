@@ -8,13 +8,13 @@ import run.prizm.core.common.exception.BusinessException;
 import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.file.entity.File;
 import run.prizm.core.file.repository.FileRepository;
-import run.prizm.core.storage.minio.MinioService;
+import run.prizm.core.storage.s3.S3Service;
 
 @Component
 @RequiredArgsConstructor
 public class ImageUploadHelper {
 
-    private final MinioService minioService;
+    private final S3Service s3Service;
     private final FileRepository fileRepository;
 
     @Transactional
@@ -24,7 +24,7 @@ public class ImageUploadHelper {
         }
 
         try {
-            MinioService.UploadResult result = minioService.uploadFile(image, directory);
+            S3Service.UploadResult result = s3Service.uploadFile(image, directory);
 
             File file = File.builder()
                             .name(result.originalName())
@@ -46,7 +46,7 @@ public class ImageUploadHelper {
         }
 
         try {
-            MinioService.UploadResult result = minioService.uploadFromUrl(imageUrl, directory);
+            S3Service.UploadResult result = s3Service.uploadFromUrl(imageUrl, directory);
 
             File file = File.builder()
                             .name(result.originalName())
@@ -68,7 +68,7 @@ public class ImageUploadHelper {
         }
 
         try {
-            minioService.deleteFile(file.getPath());
+            s3Service.deleteFile(file.getPath());
             fileRepository.delete(file);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, "Failed to delete file: " + e.getMessage());
@@ -79,6 +79,6 @@ public class ImageUploadHelper {
         if (file == null) {
             return null;
         }
-        return minioService.getFileUrl(file.getPath());
+        return s3Service.getFileUrl(file.getPath());
     }
 }

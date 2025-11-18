@@ -17,7 +17,7 @@ import run.prizm.core.space.channel.permission.ChannelPermissionCalculator;
 import run.prizm.core.space.workspace.constraint.WorkspaceUserRole;
 import run.prizm.core.space.workspace.entity.WorkspaceUser;
 import run.prizm.core.space.workspace.repository.WorkspaceUserRepository;
-import run.prizm.core.storage.minio.MinioService;
+import run.prizm.core.storage.s3.S3Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +31,7 @@ public class ChannelAccessService {
     private final WorkspaceUserRepository workspaceUserRepository;
     private final CategoryRepository categoryRepository;
     private final ChannelPermissionCalculator permissionCalculator;
-    private final MinioService minioService;
+    private final S3Service s3Service;
 
     @Cacheable(value = "channelAccess", key = "#workspaceId + ':' + #userId")
     @Transactional(readOnly = true)
@@ -87,13 +87,13 @@ public class ChannelAccessService {
 
             if (permissions.containsKey(channelId) && permissions.get(channelId) != ChannelPermission.NONE) {
                 String image = wu.getImage() != null
-                        ? minioService.getFileUrl(wu.getImage()
-                                                    .getPath())
+                        ? s3Service.getFileUrl(wu.getImage()
+                                                 .getPath())
                         : (wu.getUser()
                              .getImage() != null
-                        ? minioService.getFileUrl(wu.getUser()
-                                                    .getImage()
-                                                    .getPath())
+                        ? s3Service.getFileUrl(wu.getUser()
+                                                 .getImage()
+                                                 .getPath())
                         : null);
                 String name = wu.getName() != null ? wu.getName() : wu.getUser()
                                                                       .getName();
