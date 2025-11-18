@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import run.prizm.core.common.constraint.Language;
@@ -39,6 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                            .getRegistrationId();
         OAuth2AttributeExtractor extractor = findExtractor(registrationId);
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
+        validateUserData(userData, registrationId);
 
         String languageParam = getLanguageFromRequest();
         Language requestLanguage = parseLanguage(languageParam);
@@ -112,6 +114,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return Language.from(languageParam);
         } catch (IllegalArgumentException ignored) {
             return null;
+        }
+    }
+
+    private void validateUserData(OAuth2UserData userData, String provider) {
+        if (!StringUtils.hasText(userData.email()) || !StringUtils.hasText(userData.name())) {
+            throw new BusinessException(ErrorCode.INVALID_AUTHENTICATION, "Missing required profile information from " + provider);
         }
     }
 }

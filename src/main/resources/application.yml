@@ -63,7 +63,8 @@ prizm:
       secure: ${COOKIE_SECURE}
       same-site: ${COOKIE_SAME_SITE}
       domain: ${COOKIE_DOMAIN}
-      path: /api
+      # local test only
+      path: /
 
   minio:
     host: ${MINIO_HOST}
