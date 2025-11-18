@@ -60,8 +60,10 @@ prizm:
       refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
     cookie:
       http-only: true
-      secure: ${COOKIE_SECURE}
-      same-site: ${COOKIE_SAME_SITE}
+      # local test only
+      secure: ${COOKIE_SECURE:secure}
+      # local test only
+      same-site: ${COOKIE_SAME_SITE:strict}
       domain: ${COOKIE_DOMAIN}
       path: /
 
@@ -72,11 +74,11 @@ prizm:
     secret-key: ${S3_SECRET_KEY}
     bucket: ${S3_BUCKET}
     # local test only
-    public-url: ${S3_PUBLIC_URL}
+    public-url: ${S3_PUBLIC_URL:}
 
   frontend:
     # local test only
-    redirect-url: ${FRONTEND_REDIRECT_URL}
+    redirect-url: ${FRONTEND_REDIRECT_URL:}
 
   translate:
     api-url: ${TRANSLATE_API_URL}
