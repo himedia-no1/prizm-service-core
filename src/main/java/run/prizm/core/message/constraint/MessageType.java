@@ -5,5 +5,14 @@ public enum MessageType {
     LINK,
     MEDIA,
     DOCUMENT,
-    FILE
+    FILE;
+
+    public static MessageType from(String value) {
+        for (MessageType type : values()) {
+            if (type.name().equalsIgnoreCase(value)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported message type: " + value);
+    }
 }

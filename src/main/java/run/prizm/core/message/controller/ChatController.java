@@ -17,7 +17,6 @@ import run.prizm.core.message.dto.MessageSendRequest;
 import run.prizm.core.message.dto.TranslationRequest;
 import run.prizm.core.message.dto.TranslationResponse;
 import run.prizm.core.message.entity.Message;
-import run.prizm.core.message.repository.MessageTypeRepository;
 import run.prizm.core.message.service.ChatService;
 import run.prizm.core.message.service.TranslationService;
 import run.prizm.core.space.channel.entity.Channel;
@@ -32,7 +31,6 @@ public class ChatController {
     private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
     private final ChatService chatService;
     private final TranslationService translationService;
-    private final MessageTypeRepository messageTypeRepository; // To fetch MessageType entity
     private final ChannelRepository channelRepository;
     private final WorkspaceUserRepository workspaceUserRepository;
 
@@ -53,8 +51,12 @@ public class ChatController {
                                                              .orElseThrow(
                                                                      () -> new BusinessException(ErrorCode.WORKSPACE_USER_NOT_FOUND));
 
-        MessageType messageType = messageTypeRepository.findById(request.contentType())
-                                                       .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
+        MessageType messageType;
+        try {
+            messageType = MessageType.from(request.contentType());
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
         Message message = Message.builder()
                                  .channel(channel)

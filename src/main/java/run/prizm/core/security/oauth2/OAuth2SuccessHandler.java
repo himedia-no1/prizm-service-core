@@ -56,13 +56,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private void handleLanguageSetting(HttpServletRequest request, HttpServletResponse response, User user) {
         if (user.getLanguage() == null) {
             String nextLocale = CookieUtils.getCookieValue(request, "NEXT_LOCALE");
-            if (nextLocale != null && !nextLocale.isEmpty()) {
-                try {
-                    Language language = Language.valueOf(nextLocale.toUpperCase());
-                    user.setLanguage(language);
-                    userRepository.save(user);
-                } catch (IllegalArgumentException e) {
-                }
+            Language parsedLanguage = parseLanguage(nextLocale);
+            if (parsedLanguage != null) {
+                user.setLanguage(parsedLanguage);
+                userRepository.save(user);
             }
         }
 
@@ -107,5 +104,16 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Object value = redisTemplate.opsForValue()
                                     .get(key);
         return value != null ? value.toString() : null;
+    }
+
+    private Language parseLanguage(String languageParam) {
+        if (languageParam == null || languageParam.isEmpty()) {
+            return null;
+        }
+        try {
+            return Language.from(languageParam);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 }

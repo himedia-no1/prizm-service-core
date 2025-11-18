@@ -32,65 +32,46 @@ public class TranslationService {
 
     @Transactional(readOnly = true)
     public Mono<String> getOrTranslateMessage(Long messageId, String targetLangCode) {
-        // 1. Find existing translation in a non-blocking way
-        return findExistingTranslation(messageId, targetLangCode)
-                // 2. If not found, switch to the translation logic
-                .switchIfEmpty(Mono.defer(() -> translateAndSave(messageId, targetLangCode)));
+        Language targetLanguage = resolveLanguage(targetLangCode);
+        return findExistingTranslation(messageId, targetLanguage)
+                .switchIfEmpty(Mono.defer(() -> translateAndSave(messageId, targetLanguage)));
     }
 
-    private Mono<String> findExistingTranslation(Long messageId, String targetLangCode) {
-        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguage(messageId, Language.valueOf(targetLangCode)))
+    private Mono<String> findExistingTranslation(Long messageId, Language targetLanguage) {
+        return Mono.fromCallable(() -> messageTranslationRepository.findByMessageIdAndLanguage(messageId, targetLanguage))
                    .subscribeOn(Schedulers.boundedElastic()) // Delegate blocking DB call
                    // 수정된 부분: Optional을 Mono로 올바르게 변환
                    .flatMap(optionalTranslation -> Mono.justOrEmpty(optionalTranslation.map(MessageTranslation::getContent)));
     }
 
-    private Mono<String> translateAndSave(Long messageId, String targetLangCode) {
-        // Fetch the original message
+    private Mono<String> translateAndSave(Long messageId, Language targetLanguage) {
         Mono<Message> messageMono = Mono.fromCallable(() -> messageRepository.findById(messageId)
                                                                              .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "Message not found with id: " + messageId)))
                                         .subscribeOn(Schedulers.boundedElastic());
 
-        // Fetch the language enum
-        Mono<Language> languageMono = Mono.fromCallable(() -> {
-                                              try {
-                                                  return Language.valueOf(targetLangCode.toUpperCase());
-                                              } catch (IllegalArgumentException e) {
-                                                  throw new BusinessException(ErrorCode.INVALID_LANGUAGE_CODE, "Invalid target language code: " + targetLangCode);
-                                              }
-                                          })
-                                          .subscribeOn(Schedulers.boundedElastic());
-
         return messageMono.flatMap(message ->
-                // Call external API
-                callExternalTranslationApi(message.getContent(), targetLangCode)
-                        .zipWith(languageMono) // Combine API result with language entity
-                        .flatMap(tuple -> {
-                            String translatedContent = tuple.getT1();
-                            Language targetLanguage = tuple.getT2();
-
+                callExternalTranslationApi(message.getContent(), targetLanguage)
+                        .flatMap(translatedContent -> {
                             MessageTranslation newTranslation = MessageTranslation.builder()
                                                                                   .message(message)
                                                                                   .language(targetLanguage)
                                                                                   .content(translatedContent)
                                                                                   .build();
 
-                            // Save the new translation (blocking call)
-                            return Mono.fromRunnable(() -> messageTranslationRepository.save(newTranslation))
+                            return Mono.fromCallable(() -> messageTranslationRepository.save(newTranslation))
                                        .subscribeOn(Schedulers.boundedElastic())
-                                       .thenReturn(translatedContent); // After saving, return the content
+                                       .thenReturn(translatedContent);
                         })
         );
     }
 
-    private Mono<String> callExternalTranslationApi(String text, String targetLang) {
+    private Mono<String> callExternalTranslationApi(String text, Language targetLang) {
         WebClient webClient = webClientBuilder.baseUrl(translateProperties.getApiUrl())
                                               .build();
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", text);
-        if (targetLang != null && !targetLang.isEmpty()) {
-            requestBody.put("target_lang", targetLang);
-        }
+        requestBody.put("target_lang", targetLang.name()
+                                                 .toLowerCase());
 
         return webClient.post()
                         .bodyValue(requestBody)
@@ -99,5 +80,13 @@ public class TranslationService {
                         .map(response -> (String) response.get("result"))
                         .doOnError(error -> logger.error("Translation API call failed", error))
                         .onErrorReturn("Error: Translation failed.");
+    }
+
+    private Language resolveLanguage(String targetLangCode) {
+        try {
+            return Language.from(targetLangCode);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_LANGUAGE_CODE, "Invalid target language code: " + targetLangCode);
+        }
     }
 }

@@ -41,8 +41,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserData userData = extractor.extract(oAuth2User.getAttributes());
 
         String languageParam = getLanguageFromRequest();
-
-        User user = authenticateWithOAuth2(registrationId, userData, languageParam);
+        Language requestLanguage = parseLanguage(languageParam);
+        User user = authenticateWithOAuth2(registrationId, userData, requestLanguage);
         return createOAuth2User(user, oAuth2User.getAttributes());
     }
 
@@ -53,33 +53,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                          .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE));
     }
 
-    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData, String languageParam) {
+    private User authenticateWithOAuth2(String registrationId, OAuth2UserData userData, Language requestLanguage) {
         UserAuthProvider userAuthProvider = UserAuthProvider.valueOf(registrationId.toUpperCase());
         return userRepository.findByAuthProviderAndOpenidSub(userAuthProvider, userData.providerId())
                              .map(user -> {
                                  user.setName(userData.name());
                                  user.setEmail(userData.email());
 
-                                 if (languageParam != null) {
-                                     try {
-                                         Language newLanguage = Language.valueOf(languageParam.toUpperCase());
-                                         if (user.getLanguage() != newLanguage) {
-                                             user.setLanguage(newLanguage);
-                                         }
-                                     } catch (IllegalArgumentException ignored) {
-                                     }
+                                 if (requestLanguage != null && user.getLanguage() != requestLanguage) {
+                                     user.setLanguage(requestLanguage);
                                  }
 
                                  return userRepository.save(user);
                              })
                              .orElseGet(() -> {
-                                 Language language = Language.EN;
-                                 if (languageParam != null) {
-                                     try {
-                                         language = Language.valueOf(languageParam.toUpperCase());
-                                     } catch (IllegalArgumentException ignored) {
-                                     }
-                                 }
+                                 Language language = requestLanguage != null ? requestLanguage : Language.EN;
 
                                  File profileImage = null;
                                  if (userData.profileImage() != null && !userData.profileImage()
@@ -114,5 +102,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private OAuth2User createOAuth2User(User user, Map<String, Object> attributes) {
         return new CustomOAuth2User(user, attributes);
+    }
+
+    private Language parseLanguage(String languageParam) {
+        if (languageParam == null || languageParam.isEmpty()) {
+            return null;
+        }
+        try {
+            return Language.from(languageParam);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 }
