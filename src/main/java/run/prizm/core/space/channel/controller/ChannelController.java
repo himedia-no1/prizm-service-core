@@ -33,10 +33,12 @@ public class ChannelController {
     @GetMapping("/api/workspaces/{workspaceId}/channels/{channelId}")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER, WorkspaceUserRole.MEMBER, WorkspaceUserRole.GUEST})
     public ResponseEntity<ChannelInfoResponse> getChannelInfo(
+            @PathVariable Long workspaceId,
             @PathVariable Long channelId,
             @CurrentUser Long userId
     ) {
-        ChannelInfoResponse response = channelService.getChannelInfo(channelId, userId);
+        // userId를 workspaceUserId로 변환
+        ChannelInfoResponse response = channelService.getChannelInfo(workspaceId, channelId, userId);
         return ResponseEntity.ok(response);
     }
 

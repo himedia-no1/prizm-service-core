@@ -60,20 +60,23 @@ public class WorkspaceService {
         );
 
         String imageUrl = imageUploadHelper.getImageUrl(workspace.getImage());
-        return new WorkspaceResponse(workspace.getId(), workspace.getName(), imageUrl, workspace.getCreatedAt());
+        return new WorkspaceResponse(workspace.getId(), workspace.getName(), imageUrl, workspace.getCreatedAt(), WorkspaceUserRole.OWNER);
     }
 
     @Transactional(readOnly = true)
-    public WorkspaceResponse getWorkspace(Long workspaceId) {
+    public WorkspaceResponse getWorkspace(Long userId, Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
+        WorkspaceUser workspaceUser = workspaceUserRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
+                                                             .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_USER_NOT_FOUND));
+
         String imageUrl = imageUploadHelper.getImageUrl(workspace.getImage());
-        return new WorkspaceResponse(workspace.getId(), workspace.getName(), imageUrl, workspace.getCreatedAt());
+        return new WorkspaceResponse(workspace.getId(), workspace.getName(), imageUrl, workspace.getCreatedAt(), workspaceUser.getRole());
     }
 
     @Transactional
-    public WorkspaceResponse updateWorkspace(Long workspaceId, WorkspaceUpdateRequest request) {
+    public WorkspaceResponse updateWorkspace(Long userId, Long workspaceId, WorkspaceUpdateRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -92,7 +95,7 @@ public class WorkspaceService {
         }
 
         workspaceRepository.save(workspace);
-        return getWorkspace(workspaceId);
+        return getWorkspace(userId, workspaceId);
     }
 
     @Transactional

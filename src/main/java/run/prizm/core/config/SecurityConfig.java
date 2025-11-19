@@ -66,6 +66,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**")
                     .permitAll()
+                    .requestMatchers("/api/invites/*/join")
+                    .authenticated()
+                    .requestMatchers("/api/invites/*")
+                    .permitAll()
                     .requestMatchers("/error")
                     .permitAll()
                     .requestMatchers("/ws-stomp/**")
@@ -74,6 +78,13 @@ public class SecurityConfig {
                     .authenticated()
             )
             .oauth2Login(this::configureOAuth2Login)
+            .exceptionHandling(exceptions -> exceptions
+                    .authenticationEntryPoint((request, response, authException) -> {
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.setStatus(401);
+                        response.getWriter().write("{\"code\":\"A001\",\"message\":\"Authentication required\",\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+                    })
+            )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -47,6 +47,9 @@ public class ChannelAccessService {
 
         List<AccessibleChannelListResponse.CategoryWithChannels> result = new ArrayList<>();
 
+        boolean isOwnerOrManager = workspaceUser.getRole() == WorkspaceUserRole.OWNER ||
+                                   workspaceUser.getRole() == WorkspaceUserRole.MANAGER;
+
         for (Category category : categories) {
             List<AccessibleChannelListResponse.ChannelItem> channels = category.getChannels()
                                                                                .stream()
@@ -62,7 +65,7 @@ public class ChannelAccessService {
                                                                                ))
                                                                                .toList();
 
-            if (!channels.isEmpty()) {
+            if (!channels.isEmpty() || isOwnerOrManager) {
                 result.add(new AccessibleChannelListResponse.CategoryWithChannels(
                         category.getId(),
                         category.getName(),

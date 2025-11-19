@@ -324,7 +324,8 @@ public class WorkspaceInviteService {
                 workspace.getId(),
                 workspace.getName(),
                 imageUrl,
-                workspace.getCreatedAt()
+                workspace.getCreatedAt(),
+                null // 비로그인 상태에서는 역할 정보 없음
         );
     }
 }

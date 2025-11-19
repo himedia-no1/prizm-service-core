@@ -41,19 +41,21 @@ public class WorkspaceController {
 
     @GetMapping("/{workspaceId}")
     public ResponseEntity<WorkspaceResponse> getWorkspace(
+            @CurrentUser Long userId,
             @PathVariable Long workspaceId
     ) {
-        WorkspaceResponse response = workspaceService.getWorkspace(workspaceId);
+        WorkspaceResponse response = workspaceService.getWorkspace(userId, workspaceId);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{workspaceId}")
     @RequireWorkspaceRole({WorkspaceUserRole.OWNER, WorkspaceUserRole.MANAGER})
     public ResponseEntity<WorkspaceResponse> updateWorkspace(
+            @CurrentUser Long userId,
             @PathVariable Long workspaceId,
             @Valid @ModelAttribute WorkspaceUpdateRequest request
     ) {
-        WorkspaceResponse response = workspaceService.updateWorkspace(workspaceId, request);
+        WorkspaceResponse response = workspaceService.updateWorkspace(userId, workspaceId, request);
         return ResponseEntity.ok(response);
     }
 

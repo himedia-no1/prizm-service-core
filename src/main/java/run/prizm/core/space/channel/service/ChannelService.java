@@ -61,12 +61,13 @@ public class ChannelService {
     }
 
     @Transactional(readOnly = true)
-    public ChannelInfoResponse getChannelInfo(Long channelId, Long workspaceUserId) {
+    public ChannelInfoResponse getChannelInfo(Long workspaceId, Long channelId, Long userId) {
         Channel channel = channelRepository.findById(channelId)
                                            .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        WorkspaceUser workspaceUser = workspaceUserRepository.findById(workspaceUserId)
-                                                             .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_USER_NOT_FOUND));
+        WorkspaceUser workspaceUser = workspaceUserRepository
+                .findByWorkspaceIdAndUserIdAndDeletedAtIsNull(workspaceId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_USER_NOT_FOUND));
 
         ChannelWorkspaceUserNotify notify = channelWorkspaceUserRepository
                 .findByChannelAndWorkspaceUser(channel, workspaceUser)
