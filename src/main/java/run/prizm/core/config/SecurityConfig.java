@@ -43,12 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationManager<Message<?>> messageAuthorizationManager(MessageMatcherDelegatingAuthorizationManager.Builder messages) {
-        messages
-                // For development, permit all message types.
-                // In production, you should specify authorization rules, e.g.,
-                // .simpTypeMatchers(SimpMessageType.CONNECT, SimpMessageType.HEARTBEAT, SimpMessageType.UNSUBSCRIBE, SimpMessageType.DISCONNECT).permitAll()
-                // .simpDestMatchers("/pub/**").authenticated()
-                .anyMessage().permitAll();
+        messages.anyMessage().permitAll();
         return messages.build();
     }
     

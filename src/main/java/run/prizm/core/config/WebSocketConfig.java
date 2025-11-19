@@ -2,6 +2,7 @@ package run.prizm.core.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -48,6 +49,24 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-stomp")
                 .setAllowedOriginPatterns("http://localhost:3000")
                 .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new org.springframework.messaging.support.ChannelInterceptor() {
+            @Override
+            public org.springframework.messaging.Message<?> preSend(org.springframework.messaging.Message<?> message, org.springframework.messaging.MessageChannel channel) {
+                org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor = 
+                    org.springframework.messaging.simp.stomp.StompHeaderAccessor.wrap(message);
+                
+                if (org.springframework.messaging.simp.SimpMessageType.CONNECT.equals(accessor.getMessageType())) {
+                    // CONNECT 메시지는 항상 허용
+                    return message;
+                }
+                
+                return message;
+            }
+        });
     }
 
 }
