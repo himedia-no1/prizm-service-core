@@ -41,7 +41,7 @@ public class ChannelService {
         Category category = categoryRepository.findById(categoryId)
                                               .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        BigDecimal zIndex = channelRepository.findLastByCategoryId(categoryId)
+        BigDecimal zIndex = channelRepository.findFirstByCategoryIdAndDeletedAtIsNullOrderByZIndexDesc(categoryId)
                                              .map(lastChannel -> lastChannel.getZIndex()
                                                                             .add(BigDecimal.ONE))
                                              .orElse(BigDecimal.ONE);

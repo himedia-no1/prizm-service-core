@@ -12,9 +12,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c FROM Category c WHERE c.workspace.id = :workspaceId AND c.deletedAt IS NULL ORDER BY c.zIndex ASC")
     List<Category> findByWorkspaceIdAndDeletedAtIsNullOrderByZIndex(Long workspaceId);
 
-    @Query("SELECT c FROM Category c WHERE c.workspace.id = :workspaceId AND c.deletedAt IS NULL ORDER BY c.zIndex ASC")
-    Optional<Category> findFirstByWorkspaceId(Long workspaceId);
+    @Query("SELECT c FROM Category c WHERE c.workspace.id = :workspaceId AND c.deletedAt IS NULL ORDER BY c.zIndex ASC LIMIT 1")
+    Optional<Category> findFirstByWorkspaceIdAndDeletedAtIsNullOrderByZIndexAsc(Long workspaceId);
 
-    @Query("SELECT c FROM Category c WHERE c.workspace.id = :workspaceId AND c.deletedAt IS NULL ORDER BY c.zIndex DESC")
-    Optional<Category> findLastByWorkspaceId(Long workspaceId);
+    @Query("SELECT c FROM Category c WHERE c.workspace.id = :workspaceId AND c.deletedAt IS NULL ORDER BY c.zIndex DESC LIMIT 1")
+    Optional<Category> findFirstByWorkspaceIdAndDeletedAtIsNullOrderByZIndexDesc(Long workspaceId);
 }

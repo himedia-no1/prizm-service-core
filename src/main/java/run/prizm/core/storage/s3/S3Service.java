@@ -9,6 +9,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
@@ -43,6 +44,7 @@ public class S3Service {
                                                            .bucket(s3Properties.getBucket())
                                                            .key(path)
                                                            .contentType(file.getContentType())
+                                                           .acl(ObjectCannedACL.PUBLIC_READ)
                                                            .build();
 
                 s3Client.putObject(request, RequestBody.fromInputStream(inputStream, file.getSize()));
@@ -81,6 +83,7 @@ public class S3Service {
             PutObjectRequest request = PutObjectRequest.builder()
                                                        .bucket(s3Properties.getBucket())
                                                        .key(path)
+                                                       .acl(ObjectCannedACL.PUBLIC_READ)
                                                        .build();
 
             s3Client.putObject(request, RequestBody.fromBytes(content));

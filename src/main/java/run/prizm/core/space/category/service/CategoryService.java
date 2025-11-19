@@ -31,7 +31,7 @@ public class CategoryService {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                                                  .orElseThrow(() -> new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-        BigDecimal zIndex = categoryRepository.findLastByWorkspaceId(workspaceId)
+        BigDecimal zIndex = categoryRepository.findFirstByWorkspaceIdAndDeletedAtIsNullOrderByZIndexDesc(workspaceId)
                                               .map(lastCategory -> lastCategory.getZIndex()
                                                                                .add(BigDecimal.ONE))
                                               .orElse(BigDecimal.ONE);
