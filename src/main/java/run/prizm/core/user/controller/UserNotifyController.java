@@ -2,12 +2,12 @@ package run.prizm.core.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import run.prizm.core.user.dto.UserNotifyListResponse;
 import run.prizm.core.user.resolver.CurrentUser;
 import run.prizm.core.user.service.UserNotifyService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -22,5 +22,23 @@ public class UserNotifyController {
     ) {
         UserNotifyListResponse response = userNotifyService.getNotifications(userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping
+    public ResponseEntity<Void> markAsRead(
+            @CurrentUser Long userId,
+            @RequestBody List<Long> notificationIds
+    ) {
+        userNotifyService.markAsRead(userId, notificationIds);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteNotifications(
+            @CurrentUser Long userId,
+            @RequestBody List<Long> notificationIds
+    ) {
+        userNotifyService.deleteNotifications(userId, notificationIds);
+        return ResponseEntity.noContent().build();
     }
 }

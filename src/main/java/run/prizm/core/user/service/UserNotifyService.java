@@ -3,6 +3,8 @@ package run.prizm.core.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import run.prizm.core.common.exception.BusinessException;
+import run.prizm.core.common.exception.ErrorCode;
 import run.prizm.core.user.dto.UserNotifyListResponse;
 import run.prizm.core.user.entity.UserNotify;
 import run.prizm.core.user.repository.UserNotifyRepository;
@@ -34,5 +36,32 @@ public class UserNotifyService {
                                                                          .toList();
 
         return new UserNotifyListResponse(items);
+    }
+
+    @Transactional
+    public void markAsRead(Long userId, List<Long> notificationIds) {
+        List<UserNotify> notifications = userNotifyRepository.findAllById(notificationIds);
+
+        for (UserNotify notification : notifications) {
+            if (!notification.getReceiver().getId().equals(userId)) {
+                throw new BusinessException(ErrorCode.FORBIDDEN);
+            }
+            notification.setRead(true);
+        }
+
+        userNotifyRepository.saveAll(notifications);
+    }
+
+    @Transactional
+    public void deleteNotifications(Long userId, List<Long> notificationIds) {
+        List<UserNotify> notifications = userNotifyRepository.findAllById(notificationIds);
+
+        for (UserNotify notification : notifications) {
+            if (!notification.getReceiver().getId().equals(userId)) {
+                throw new BusinessException(ErrorCode.FORBIDDEN);
+            }
+        }
+
+        userNotifyRepository.deleteAll(notifications);
     }
 }
