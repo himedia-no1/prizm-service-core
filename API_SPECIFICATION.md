@@ -96,7 +96,7 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 
-**에러**: A005, A006, A007
+**에러**: A005, A006, A007, U001, U004
 
 ---
 
@@ -110,7 +110,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, A005, A006, A007
+**에러**: 없음
 
 ---
 
@@ -123,7 +123,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, U001, U004
+**에러**: A001, A003, A004, U001
 
 ---
 
@@ -256,7 +256,7 @@ refresh token 쿠키로 새 access token 발급
 ]
 ```
 
-**에러**: A001, A003, A004, U001, U004
+**에러**: A001, A003, A004
 
 ---
 
@@ -285,7 +285,7 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 
-**에러**: A001, A003, A004, C001, U001, U004, F002
+**에러**: A001, A003, A004, C001, U001
 
 ---
 
@@ -329,7 +329,7 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 
-**에러**: A001, A003, A004, W001, W004, F002
+**에러**: A001, A003, A004, W001, W004, F002, F004
 
 ---
 
@@ -342,7 +342,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W004
+**에러**: A001, A003, A004, W004
 
 ---
 
@@ -393,7 +393,7 @@ refresh token 쿠키로 새 access token 발급
 - `notifyType`: ON | MENTION | OFF
 - `state`: ONLINE | AWAY | BUSY | OFFLINE
 
-**에러**: A001, A003, A004, W001, W002
+**에러**: A001, A003, A004, W002
 
 ---
 
@@ -428,7 +428,7 @@ refresh token 쿠키로 새 access token 발급
 - `role`: OWNER | MANAGER | MEMBER | GUEST
 - `authProvider`: GOOGLE | GITHUB
 
-**에러**: A001, A003, A004, W001, W002
+**에러**: A001, A003, A004, W002
 
 ---
 
@@ -447,7 +447,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W002, F002
+**에러**: A001, A003, A004, W002, F002, F004
 
 ---
 
@@ -467,7 +467,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, C001, W001, W002
+**에러**: A001, A003, A004, C001, W002
 
 ---
 
@@ -487,7 +487,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, C001, W001, W002
+**에러**: A001, A003, A004, C001, W002
 
 ---
 
@@ -507,7 +507,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, C001, W001, W002, W004, W006
+**에러**: A001, A003, A004, C001, W002, W004, W006
 
 ---
 
@@ -520,7 +520,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W002, W004
+**에러**: A001, A003, A004, W002, W004
 
 ---
 
@@ -533,7 +533,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W002, W004
+**에러**: A001, A003, A004, W002, W004
 
 ---
 
@@ -546,7 +546,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W002, W004
+**에러**: A001, A003, A004, W002, W004
 
 ---
 
@@ -559,7 +559,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W002, W005
+**에러**: A001, A003, A004, W002, W005
 
 ---
 
@@ -580,11 +580,11 @@ refresh token 쿠키로 새 access token 발급
   "channelId": null
 }
 ```
-- `expiresInSeconds` (숫자, 필수, 최소: 1)
-- `maxUses` (숫자, 필수, 최소: 1)
-- `allowedUserIds` (배열, 선택): 복수 사용자 제한
+- `expiresInSeconds` (숫자, 선택, 최소: 1): null이면 만료 없음
+- `maxUses` (숫자, 선택, 최소: 1): null이면 무제한 사용
+- `allowedUserIds` (배열, 선택): 복수 사용자 제한 (게스트 초대 시 필수)
 - `autoJoinGroupIds` (배열, 선택): 자동 참여 그룹
-- `channelId` (숫자, 선택): 게스트 초대용 (제공시 게스트 초대 생성)
+- `channelId` (숫자, 선택): 게스트 초대용 (지정 시 allowedUserIds 필수)
 
 **응답 200**
 ```json
@@ -595,8 +595,9 @@ refresh token 쿠키로 새 access token 발급
   "channelId": null
 }
 ```
+- 게스트 초대의 경우 `expiresAt`, `maxUses` 는 null일 수 있음
 
-**에러**: A001, A003, A004, C001, W001, W002, W004, W010, CH001, I005, I006, I007
+**에러**: A001, A003, A004, C001, W002, W004, W007, W010, CH001, I005, I006, I007, I010
 
 ---
 
@@ -620,7 +621,7 @@ refresh token 쿠키로 새 access token 발급
 ]
 ```
 
-**에러**: A001, A003, A004, W001, W004
+**에러**: A001, A003, A004, W004
 
 ---
 
@@ -633,12 +634,12 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, W001, W004, I001
+**에러**: A001, A003, A004, W004, I001, I008
 
 ---
 
 ### GET /api/invites/{code}
-초대 코드로 워크스페이스 정보 조회 (공개)
+초대 코드로 워크스페이스 정보 조회
 
 **요청**
 - Header: `Authorization: Bearer {token}`
@@ -653,12 +654,12 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 
-**에러**: A001, A003, A004, I001, I002
+**에러**: A001, A003, A004, I001, I002, W001, W011
 
 ---
 
 ### POST /api/invites/{code}/join
-초대 코드로 워크스페이스 참여 (공개)
+초대 코드로 워크스페이스 참여
 
 **요청**
 - Header: `Authorization: Bearer {token}`
@@ -671,8 +672,9 @@ refresh token 쿠키로 새 access token 발급
   "role": "MEMBER"
 }
 ```
+- `userId`: 워크스페이스 사용자 ID
 
-**에러**: A001, A003, A004, I001, I002, I003, I004, I008, I009, U003, W008, W009, W011
+**에러**: A001, A003, A004, I001, I002, I003, I004, I008, I009, U001, U003, W001, W008, W009, W011
 
 ---
 
@@ -742,14 +744,14 @@ refresh token 쿠키로 새 access token 발급
 - Body:
 ```json
 {
-  "position": "before",
+  "position": "BETWEEN",
   "beforeId": 5,
   "afterId": null
 }
 ```
-- `position`: before | after | first | last (필수)
-- `beforeId` (숫자, 선택): before/after 기준 카테고리
-- `afterId` (숫자, 선택): before/after 기준 카테고리
+- `position`: FIRST | LAST | BETWEEN (필수)
+- `beforeId` (숫자, `BETWEEN` 시 필수)
+- `afterId` (숫자, `BETWEEN` 시 필수)
 
 **응답 204**
 내용 없음
@@ -825,7 +827,7 @@ refresh token 쿠키로 새 access token 발급
 ```
 - `myNotify`: ON | MENTION | OFF
 
-**에러**: A001, A003, A004, CH001
+**에러**: A001, A003, A004, CH001, W002
 
 ---
 
@@ -870,14 +872,14 @@ refresh token 쿠키로 새 access token 발급
 - Body:
 ```json
 {
-  "position": "before",
+  "position": "BETWEEN",
   "beforeId": 5,
   "afterId": null
 }
 ```
-- `position`: before | after | first | last (필수)
-- `beforeId` (숫자, 선택)
-- `afterId` (숫자, 선택)
+- `position`: FIRST | LAST | BETWEEN (필수)
+- `beforeId` (숫자, `BETWEEN` 시 필수)
+- `afterId` (숫자, `BETWEEN` 시 필수)
 
 **응답 204**
 내용 없음
@@ -902,7 +904,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, C001, CH001
+**에러**: A001, A003, A004, C001, CH001, W002
 
 ---
 
@@ -915,7 +917,7 @@ refresh token 쿠키로 새 access token 발급
 **응답 204**
 내용 없음
 
-**에러**: A001, A003, A004, CH001, W004, R001
+**에러**: A001, A003, A004, CH001, W004
 
 ---
 
@@ -943,9 +945,9 @@ refresh token 쿠키로 새 access token 발급
   ]
 }
 ```
-- `permission`: NONE | READ | WRITE | MANAGE
+- `permission`: READ | WRITE | MANAGE
 
-**에러**: A001, A003, A004, W001, U001
+**에러**: A001, A003, A004, W002
 
 ---
 
@@ -971,7 +973,7 @@ refresh token 쿠키로 새 access token 발급
 ```
 - `state`: ONLINE | AWAY | BUSY | OFFLINE
 
-**에러**: A001, A003, A004, CH001
+**에러**: A001, A003, A004, W002
 
 ---
 
@@ -1083,7 +1085,7 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 - `name` (문자열, 선택)
-- `userIds` (배열, 선택): 할당할 사용자 ID 목록
+- `userIds` (배열, 선택): 할당할 워크스페이스 사용자 ID 목록
 - `channels` (배열, 선택): 채널 권한 목록
   - `channelId` (숫자, 필수)
   - `permission`: READ | WRITE | MANAGE (필수)
@@ -1098,7 +1100,7 @@ refresh token 쿠키로 새 access token 발급
 }
 ```
 
-**에러**: A001, A003, A004, C001, G001, CH001, G002, W004
+**에러**: A001, A003, A004, C001, G001, CH001, G002, W002, W004
 
 ---
 
@@ -1134,7 +1136,7 @@ refresh token 쿠키로 새 access token 발급
 ```
 - `channelId` (숫자, 필수)
 - `workspaceUserId` (숫자, 필수)
-- `contentType` (문자열, 필수)
+- `contentType` (문자열, 필수): TEXT | LINK | MEDIA | DOCUMENT | FILE
 - `content` (문자열, 필수)
 
 **응답**
