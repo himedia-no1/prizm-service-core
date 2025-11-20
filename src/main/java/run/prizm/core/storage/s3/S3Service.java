@@ -7,13 +7,16 @@ import run.prizm.core.common.exception.BusinessException;
 import run.prizm.core.common.exception.ErrorCode;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -21,6 +24,7 @@ import java.util.UUID;
 public class S3Service {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
 
     public UploadResult uploadFile(MultipartFile file, String directory) {
@@ -129,6 +133,80 @@ public class S3Service {
         return "https://" + s3Properties.getBucket()
                 + ".s3." + s3Properties.getRegion()
                 + ".amazonaws.com/" + fileName;
+    }
+
+    /**
+     * Presigned PUT URL 생성 (파일 업로드용)
+     *
+     * @param fileKey S3 key (경로 포함)
+     * @param contentType MIME type
+     * @return Presigned URL (5분 유효)
+     */
+    public String generatePresignedUploadUrl(String fileKey, String contentType) {
+        try {
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(fileKey)
+                    .contentType(contentType)
+                    .acl(ObjectCannedACL.PUBLIC_READ)
+                    .build();
+
+            PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(5))
+                    .putObjectRequest(putRequest)
+                    .build();
+
+            PresignedPutObjectRequest presigned = s3Presigner.presignPutObject(presignRequest);
+
+            return presigned.url().toString();
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, "Failed to generate presigned upload URL: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Presigned GET URL 생성 (파일 다운로드용)
+     *
+     * @param fileKey S3 key
+     * @return Presigned URL (5분 유효)
+     */
+    public String generatePresignedDownloadUrl(String fileKey) {
+        try {
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(fileKey)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(5))
+                    .getObjectRequest(getRequest)
+                    .build();
+
+            PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
+
+            return presigned.url().toString();
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_DOWNLOAD_FAILED, "Failed to generate presigned download URL: " + e.getMessage());
+        }
+    }
+
+    /**
+     * S3 파일 메타데이터 조회
+     *
+     * @param fileKey S3 key
+     * @return HeadObjectResponse
+     */
+    public HeadObjectResponse getFileMetadata(String fileKey) {
+        try {
+            HeadObjectRequest request = HeadObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(fileKey)
+                    .build();
+
+            return s3Client.headObject(request);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND, "File not found in S3: " + fileKey);
+        }
     }
 
     public record UploadResult(String path, String originalName, long size, String extension) {

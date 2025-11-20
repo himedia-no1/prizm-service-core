@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
-import run.prizm.core.properties.FrontendProperties;
+import run.prizm.core.properties.UrlProperties;
 import run.prizm.core.security.cookie.CookieUtils;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
-    private final FrontendProperties frontendProperties;
+    private final UrlProperties urlProperties;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
@@ -32,7 +32,7 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
                 ? "/invite/" + inviteCode
                 : "/login";
 
-        String frontendUrl = frontendProperties.getRedirectUrl();
+        String frontendUrl = urlProperties.getWebUserUrl();
         String redirectUrl = (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;

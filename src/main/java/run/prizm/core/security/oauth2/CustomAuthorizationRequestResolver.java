@@ -7,7 +7,7 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import run.prizm.core.properties.FrontendProperties;
+import run.prizm.core.properties.UrlProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,13 +16,13 @@ import java.util.Map;
 public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
     private final OAuth2AuthorizationRequestResolver defaultResolver;
-    private final FrontendProperties frontendProperties;
+    private final UrlProperties urlProperties;
 
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository,
-                                              FrontendProperties frontendProperties) {
+                                              UrlProperties urlProperties) {
         this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(
                 clientRegistrationRepository, "/api/auth/oauth2");
-        this.frontendProperties = frontendProperties;
+        this.urlProperties = urlProperties;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
     }
 
     private String resolveRedirectUri(String originalRedirectUri) {
-        String frontendUrl = frontendProperties.getRedirectUrl();
+        String frontendUrl = urlProperties.getWebUserUrl();
         if (!StringUtils.hasText(frontendUrl)) {
             return originalRedirectUri;
         }

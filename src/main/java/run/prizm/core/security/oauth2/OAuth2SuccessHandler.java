@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import run.prizm.core.common.constraint.Language;
 import run.prizm.core.common.exception.BusinessException;
 import run.prizm.core.common.exception.ErrorCode;
-import run.prizm.core.properties.FrontendProperties;
+import run.prizm.core.properties.UrlProperties;
 import run.prizm.core.security.cookie.CookieService;
 import run.prizm.core.security.cookie.CookieUtils;
 import run.prizm.core.security.jwt.JwtService;
@@ -32,7 +32,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final UserRepository userRepository;
     private final RefreshTokenCacheRepository refreshTokenCacheRepository;
-    private final FrontendProperties frontendProperties;
+    private final UrlProperties urlProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -86,7 +86,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private String buildRedirectUrl(String inviteCode) {
         String redirectPath = determineRedirectPath(inviteCode);
-        String frontendUrl = frontendProperties.getRedirectUrl();
+        String frontendUrl = urlProperties.getWebUserUrl();
         return (frontendUrl != null && !frontendUrl.isEmpty())
                 ? frontendUrl + redirectPath
                 : redirectPath;

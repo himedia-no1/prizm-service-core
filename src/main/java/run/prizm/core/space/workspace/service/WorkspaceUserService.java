@@ -77,6 +77,7 @@ public class WorkspaceUserService {
                                .getName();
 
         return new WorkspaceUserSimpleProfileResponse(
+                workspaceUser.getId(),  // workspaceUserId 추가
                 workspaceUser.getRole(),
                 workspaceUser.getNotify(),
                 workspaceUser.getState(),

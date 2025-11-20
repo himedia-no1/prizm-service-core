@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record MessageSendRequest(
         @NotNull Long channelId,
-        @NotNull Long workspaceUserId,
-        @NotBlank String contentType,
+        Long workspaceUserId,  // optional: 없으면 Principal에서 자동으로 찾음
+        String contentType,  // optional: 없으면 자동 판별
         @NotBlank String content
 ) {
 }

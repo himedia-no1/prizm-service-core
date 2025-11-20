@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -44,5 +45,27 @@ public class S3Config {
 
         return builder.serviceConfiguration(serviceConfiguration.build())
                       .build();
+    }
+
+    @Bean
+    public S3Presigner s3Presigner() {
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(
+                s3Properties.getAccessKey(),
+                s3Properties.getSecretKey()
+        );
+
+        S3Presigner.Builder builder = S3Presigner.builder()
+                                                 .region(Region.of(s3Properties.getRegion()))
+                                                 .credentialsProvider(StaticCredentialsProvider.create(credentials));
+
+        // MinIO용 endpoint 설정
+        if (StringUtils.hasText(s3Properties.getEndpoint())) {
+            builder = builder.endpointOverride(URI.create(s3Properties.getEndpoint()))
+                             .serviceConfiguration(S3Configuration.builder()
+                                     .pathStyleAccessEnabled(true)
+                                     .build());
+        }
+
+        return builder.build();
     }
 }

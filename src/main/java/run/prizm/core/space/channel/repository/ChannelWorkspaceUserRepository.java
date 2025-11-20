@@ -15,4 +15,6 @@ public interface ChannelWorkspaceUserRepository extends JpaRepository<ChannelWor
     Optional<ChannelWorkspaceUser> findByChannelAndWorkspaceUser(Channel channel, WorkspaceUser workspaceUser);
 
     List<ChannelWorkspaceUser> findByWorkspaceUserAndExplicitTrue(WorkspaceUser workspaceUser);
+    
+    List<ChannelWorkspaceUser> findByWorkspaceUserId(Long workspaceUserId);
 }

@@ -2,6 +2,7 @@ package run.prizm.core.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -48,6 +49,13 @@ public class RabbitConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
         objectMapper.registerModule(new JavaTimeModule());
+        
+        // Hibernate Lazy Loading 프록시 처리
+        Hibernate6Module hibernate6Module = new Hibernate6Module();
+        hibernate6Module.disable(Hibernate6Module.Feature.USE_TRANSIENT_ANNOTATION);
+        hibernate6Module.enable(Hibernate6Module.Feature.FORCE_LAZY_LOADING);
+        objectMapper.registerModule(hibernate6Module);
+        
         return new Jackson2JsonMessageConverter(objectMapper);
     }
 
