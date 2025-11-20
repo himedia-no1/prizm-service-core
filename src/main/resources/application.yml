@@ -64,7 +64,7 @@ prizm:
     cookie:
       http-only: true
       # local test only
-      secure: ${COOKIE_SECURE:secure}
+      secure: ${COOKIE_SECURE:true}
       # local test only
       same-site: ${COOKIE_SAME_SITE:strict}
       domain: ${COOKIE_DOMAIN}

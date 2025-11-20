@@ -18,10 +18,14 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompCommand command = accessor.getCommand();
+        String sessionId = accessor.getSessionId();
         
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+        logger.info("➡️ WebSocket Inbound: command={}, sessionId={}", command, sessionId);
+
+        if (StompCommand.SUBSCRIBE.equals(command)) {
             String destination = accessor.getDestination();
-            logger.info("🔍 [SUBSCRIBE] destination: '{}' (sessionId: {})", destination, accessor.getSessionId());
+            logger.info("🔍 [SUBSCRIBE] destination: '{}' (sessionId: {})", destination, sessionId);
             
             // Frontend에서 이미 /topic/channel/* 형식으로 보내므로 변환 불필요
             // RabbitMQ는 /topic, /queue prefix를 그대로 사용
@@ -34,6 +38,10 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
             } else {
                 logger.warn("⚠️ [SUBSCRIBE] Invalid destination format: '{}' - must start with /topic/, /queue/, or /user/", destination);
             }
+        } else if (StompCommand.SEND.equals(command)) {
+            logger.info("💬 [SEND] destination: '{}' (sessionId: {})", accessor.getDestination(), sessionId);
+        } else if (StompCommand.CONNECT.equals(command)) {
+            logger.info("🤝 [CONNECT] (sessionId: {})", sessionId);
         }
         
         return message;
