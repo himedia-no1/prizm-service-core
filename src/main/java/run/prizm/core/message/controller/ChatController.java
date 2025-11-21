@@ -114,20 +114,41 @@ public class ChatController {
     }
 
     /**
-     * Handles translation requests via a REST API endpoint.
+     * Handles translation requests via a REST API endpoint (동기 처리).
      *
      * @param request The request object containing the message ID and target language.
-     * @return A Mono containing the translation response.
+     * @return TranslationResponse
      */
     @PostMapping("/api/translate")
-    public Mono<TranslationResponse> handleTranslateApi(@Valid @RequestBody TranslationRequest request) {
-        logger.info("Received API translation request for messageId: {}", request.messageId());
-        return translationService.getOrTranslateMessage(request.messageId(), request.targetLang())
-                                 .map(translatedText -> new TranslationResponse(
-                                         request.messageId(),
-                                         translatedText,
-                                         null, // Original message would require another DB lookup
-                                         request.targetLang()
-                                 ));
+    public TranslationResponse handleTranslateApi(@Valid @RequestBody TranslationRequest request) {
+        logger.info("📬 Received API translation request for messageId: {}, targetLang: {}", 
+                request.messageId(), request.targetLang());
+        
+        try {
+            // Mono를 동기적으로 블로킹 처리
+            String translatedText = translationService.getOrTranslateMessage(request.messageId(), request.targetLang())
+                    .block(); // Reactive → Blocking 변환
+            
+            logger.info("✅ Translation completed: messageId={}, result length={}", 
+                    request.messageId(), translatedText != null ? translatedText.length() : 0);
+            
+            return new TranslationResponse(
+                    request.messageId(),
+                    translatedText,
+                    null,
+                    request.targetLang()
+            );
+        } catch (Exception e) {
+            logger.error("❌ Translation API failed for messageId={}: {}", 
+                    request.messageId(), e.getMessage(), e);
+            
+            // 에러 발생 시에도 응답 반환 (401 방지)
+            return new TranslationResponse(
+                    request.messageId(),
+                    "Translation failed: " + e.getMessage(),
+                    null,
+                    request.targetLang()
+            );
+        }
     }
 }

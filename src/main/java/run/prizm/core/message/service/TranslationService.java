@@ -45,8 +45,9 @@ public class TranslationService {
      */
     @Async
     public CompletableFuture<Void> translateAndNotify(Long messageId, String targetLangCode, String userId) {
-        logger.info("Starting async translation: messageId={}, targetLang={}, userId={}", 
-                messageId, targetLangCode, userId);
+        logger.info("🌐 Starting async translation: messageId={} (type: {}), targetLang={}, userId={}", 
+                messageId, messageId != null ? messageId.getClass().getSimpleName() : "null", 
+                targetLangCode, userId);
 
         Language targetLanguage = resolveLanguage(targetLangCode);
 
@@ -58,7 +59,7 @@ public class TranslationService {
         if (existingTranslation != null) {
             // 이미 번역 존재 - 즉시 전송
             sendTranslationToUser(userId, messageId, existingTranslation.getContent(), targetLangCode);
-            logger.info("Sent existing translation to user: {}", userId);
+            logger.info("✅ Sent existing translation to user: {}", userId);
             return CompletableFuture.completedFuture(null);
         }
 
@@ -66,16 +67,29 @@ public class TranslationService {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "Message not found"));
 
+        logger.info("📝 Found message: id={}, content={}, type={}", 
+                message.getId(), 
+                message.getContent() != null ? message.getContent().substring(0, Math.min(50, message.getContent().length())) : "null",
+                message.getType());
+
         // 번역 가능 타입 검증
         if (!isTranslatable(message)) {
+            logger.error("❌ Message type {} is not translatable", message.getType());
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, 
                     "Message type " + message.getType() + " is not translatable");
         }
 
         // 3. FastAPI 번역 요청
         try {
+            logger.info("🔄 Calling external translation API: text={}, targetLang={}", 
+                    message.getContent().substring(0, Math.min(20, message.getContent().length())), 
+                    targetLanguage);
+            
             String translatedContent = callExternalTranslationApi(message.getContent(), targetLanguage)
                     .block();  // Reactive → Blocking (비동기 스레드에서 실행중이므로 OK)
+
+            logger.info("✅ Translation API returned: {}", 
+                    translatedContent != null ? translatedContent.substring(0, Math.min(50, translatedContent.length())) : "null");
 
             // 4. DB 저장
             MessageTranslation newTranslation = MessageTranslation.builder()
@@ -88,11 +102,11 @@ public class TranslationService {
             // 5. 개인 큐로 전송
             sendTranslationToUser(userId, messageId, translatedContent, targetLangCode);
 
-            logger.info("Translation completed and sent to user: messageId={}, userId={}", messageId, userId);
+            logger.info("✅ Translation completed and sent to user: messageId={}, userId={}", messageId, userId);
             return CompletableFuture.completedFuture(null);
 
         } catch (Exception e) {
-            logger.error("Translation failed: messageId={}, userId={}", messageId, userId, e);
+            logger.error("❌ Translation failed: messageId={}, userId={}", messageId, userId, e);
             // 에러를 사용자에게 전송
             sendTranslationError(userId, messageId, targetLangCode, e.getMessage());
             return CompletableFuture.failedFuture(e);
@@ -158,9 +172,18 @@ public class TranslationService {
     // 기존 동기 메서드 (REST API용)
     @Transactional(readOnly = true)
     public Mono<String> getOrTranslateMessage(Long messageId, String targetLangCode) {
+        logger.info("🔍 getOrTranslateMessage: messageId={}, targetLang={}", messageId, targetLangCode);
+        
         Language targetLanguage = resolveLanguage(targetLangCode);
         return findExistingTranslation(messageId, targetLanguage)
-                .switchIfEmpty(Mono.defer(() -> translateAndSave(messageId, targetLanguage)));
+                .switchIfEmpty(Mono.defer(() -> {
+                    logger.info("🔄 No existing translation, translating now: messageId={}", messageId);
+                    return translateAndSave(messageId, targetLanguage);
+                }))
+                .doOnNext(result -> logger.info("✅ Translation result ready: messageId={}, length={}", 
+                        messageId, result != null ? result.length() : 0))
+                .doOnError(error -> logger.error("❌ Translation error: messageId={}, error={}", 
+                        messageId, error.getMessage()));
     }
 
     private Mono<String> findExistingTranslation(Long messageId, Language targetLanguage) {
@@ -171,24 +194,41 @@ public class TranslationService {
     }
 
     private Mono<String> translateAndSave(Long messageId, Language targetLanguage) {
-        Mono<Message> messageMono = Mono.fromCallable(() -> messageRepository.findById(messageId)
-                                                                             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "Message not found with id: " + messageId)))
+        logger.info("💾 translateAndSave: messageId={}, targetLang={}", messageId, targetLanguage);
+        
+        Mono<Message> messageMono = Mono.fromCallable(() -> {
+                    logger.info("🔍 Finding message: messageId={}", messageId);
+                    return messageRepository.findById(messageId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT_VALUE, 
+                                    "Message not found with id: " + messageId));
+                })
+                .subscribeOn(Schedulers.boundedElastic());
+
+        return messageMono.flatMap(message -> {
+                    logger.info("📝 Message found, calling translation API: messageId={}, content length={}", 
+                            messageId, message.getContent() != null ? message.getContent().length() : 0);
+                    
+                    return callExternalTranslationApi(message.getContent(), targetLanguage)
+                            .flatMap(translatedContent -> {
+                                logger.info("✅ Translation received, saving to DB: messageId={}", messageId);
+                                
+                                MessageTranslation newTranslation = MessageTranslation.builder()
+                                        .message(message)
+                                        .language(targetLanguage)
+                                        .content(translatedContent)
+                                        .build();
+
+                                return Mono.fromCallable(() -> {
+                                            MessageTranslation saved = messageTranslationRepository.save(newTranslation);
+                                            logger.info("💾 Translation saved: id={}, messageId={}", 
+                                                    saved.getId(), messageId);
+                                            return saved.getContent();
+                                        })
                                         .subscribeOn(Schedulers.boundedElastic());
-
-        return messageMono.flatMap(message ->
-                callExternalTranslationApi(message.getContent(), targetLanguage)
-                        .flatMap(translatedContent -> {
-                            MessageTranslation newTranslation = MessageTranslation.builder()
-                                                                                  .message(message)
-                                                                                  .language(targetLanguage)
-                                                                                  .content(translatedContent)
-                                                                                  .build();
-
-                            return Mono.fromCallable(() -> messageTranslationRepository.save(newTranslation))
-                                       .subscribeOn(Schedulers.boundedElastic())
-                                       .thenReturn(translatedContent);
-                        })
-        );
+                            });
+                })
+                .doOnError(error -> logger.error("❌ translateAndSave failed: messageId={}, error={}", 
+                        messageId, error.getMessage(), error));
     }
 
     private Mono<String> callExternalTranslationApi(String text, Language targetLang) {
@@ -199,13 +239,19 @@ public class TranslationService {
         requestBody.put("target_lang", targetLang.name()
                                                  .toLowerCase());
 
+        logger.info("🔗 Calling AI service: url={}/ai/translate, text length={}, targetLang={}", 
+                urlProperties.getServiceAiUrl(), text.length(), targetLang.name().toLowerCase());
+
         return webClient.post()
                         .uri("/ai/translate")  // 하드코딩된 경로
                         .bodyValue(requestBody)
                         .retrieve()
                         .bodyToMono(Map.class)
-                        .map(response -> (String) response.get("result"))
-                        .doOnError(error -> logger.error("Translation API call failed", error))
+                        .map(response -> {
+                            logger.info("✅ AI service response: {}", response);
+                            return (String) response.get("result");
+                        })
+                        .doOnError(error -> logger.error("❌ Translation API call failed", error))
                         .onErrorReturn("Error: Translation failed.");
     }
 
