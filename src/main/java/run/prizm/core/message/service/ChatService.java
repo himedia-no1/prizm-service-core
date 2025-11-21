@@ -30,14 +30,24 @@ public class ChatService {
         // Save the message to the database
         Message savedMessage = messageRepository.save(message);
         messageRepository.flush(); // Force flush to DB
-        logger.info("Saved message with id: {}", savedMessage.getId());
+        logger.info("💾 Saved message with id: {}", savedMessage.getId());
 
         // Reload with all relationships eagerly loaded
         Message messageWithRelations = messageRepository.findByIdWithRelations(savedMessage.getId())
                 .orElseGet(() -> savedMessage);
 
+        logger.info("🔍 Message after reload - workspaceUser: {}, user: {}, username: {}", 
+                messageWithRelations.getWorkspaceUser() != null ? messageWithRelations.getWorkspaceUser().getId() : "null",
+                messageWithRelations.getWorkspaceUser() != null && messageWithRelations.getWorkspaceUser().getUser() != null 
+                    ? messageWithRelations.getWorkspaceUser().getUser().getId() : "null",
+                messageWithRelations.getWorkspaceUser() != null && messageWithRelations.getWorkspaceUser().getUser() != null 
+                    ? messageWithRelations.getWorkspaceUser().getUser().getName() : "null");
+
         // Convert to DTO before transaction ends
         MessageResponse messageResponse = MessageResponse.from(messageWithRelations);
+        
+        logger.info("📦 MessageResponse created - workspaceUserId: {}, userId: {}, username: {}", 
+                messageResponse.getWorkspaceUserId(), messageResponse.getUserId(), messageResponse.getUsername());
         
         // Publish to RabbitMQ - DTO를 전달하므로 Lazy Loading 문제 없음
         messagePublisher.publishMessageCreated(messageResponse);

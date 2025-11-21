@@ -45,6 +45,9 @@ public class ChatController {
     public void sendMessage(@Valid MessageSendRequest request, java.security.Principal principal) {
         logger.info("📩 Received message for channelId={} from user={}", 
                 request.channelId(), principal != null ? principal.getName() : "anonymous");
+        logger.info("🔍 Request data: channelId={}, workspaceUserId={}, contentType={}, content={}", 
+                request.channelId(), request.workspaceUserId(), request.contentType(), 
+                request.content() != null ? request.content().substring(0, Math.min(50, request.content().length())) : "null");
 
         Channel channel = channelRepository.findById(request.channelId())
                                            .orElseThrow(
@@ -58,9 +61,15 @@ public class ChatController {
                     "workspaceUserId is required");
         }
 
-        WorkspaceUser workspaceUser = workspaceUserRepository.findById(workspaceUserId)
+        logger.info("🔍 Looking up workspaceUser with id: {}", workspaceUserId);
+        WorkspaceUser workspaceUser = workspaceUserRepository.findByIdWithUser(workspaceUserId)
                                                              .orElseThrow(
                                                                      () -> new BusinessException(ErrorCode.WORKSPACE_USER_NOT_FOUND));
+        
+        logger.info("✅ Found workspaceUser: id={}, user.id={}, user.name={}", 
+                workspaceUser.getId(), 
+                workspaceUser.getUser() != null ? workspaceUser.getUser().getId() : "null",
+                workspaceUser.getUser() != null ? workspaceUser.getUser().getName() : "null");
 
         // 메시지 타입 자동 판별 (contentType이 있으면 사용, 없으면 자동 판별)
         MessageType messageType;

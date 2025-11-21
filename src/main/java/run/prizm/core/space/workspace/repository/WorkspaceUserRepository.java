@@ -30,4 +30,10 @@ public interface WorkspaceUserRepository extends JpaRepository<WorkspaceUser, Lo
             "AND w.deletedAt IS NULL " +
             "ORDER BY w.name ASC")
     List<WorkspaceUser> findActiveWorkspacesByUserId(@Param("userId") Long userId);
+    
+    @Query("SELECT wu FROM WorkspaceUser wu " +
+            "LEFT JOIN FETCH wu.user u " +
+            "LEFT JOIN FETCH wu.workspace w " +
+            "WHERE wu.id = :id")
+    Optional<WorkspaceUser> findByIdWithUser(@Param("id") Long id);
 }
