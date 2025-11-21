@@ -66,6 +66,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**")
                     .permitAll()
+                    // TODO: [보안] 임시로 번역 API 인증 해제. 개발 완료 후 반드시 삭제하세요.
+                    .requestMatchers("/api/translate")
+                    .permitAll()
                     .requestMatchers("/api/invites/*/join")
                     .authenticated()
                     .requestMatchers("/api/invites/*")

@@ -206,7 +206,7 @@ public class TranslationService {
                         .bodyToMono(Map.class)
                         .map(response -> (String) response.get("result"))
                         .doOnError(error -> logger.error("Translation API call failed", error))
-                        .onErrorReturn("Error: Translation failed.");
+                        .onErrorResume(error -> Mono.error(new BusinessException(ErrorCode.TRANSLATION_FAILED, "External translation service failed.")));
     }
 
     private Language resolveLanguage(String targetLangCode) {
