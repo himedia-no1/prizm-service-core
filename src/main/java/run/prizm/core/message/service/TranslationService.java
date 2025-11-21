@@ -219,10 +219,23 @@ public class TranslationService {
                                         .build();
 
                                 return Mono.fromCallable(() -> {
-                                            MessageTranslation saved = messageTranslationRepository.save(newTranslation);
-                                            logger.info("💾 Translation saved: id={}, messageId={}", 
-                                                    saved.getId(), messageId);
-                                            return saved.getContent();
+                                            try {
+                                                MessageTranslation saved = messageTranslationRepository.save(newTranslation);
+                                                logger.info("💾 Translation saved: id={}, messageId={}", 
+                                                        saved.getId(), messageId);
+                                                return saved.getContent();
+                                            } catch (Exception e) {
+                                                // 중복 키 에러 발생 시 기존 번역 조회
+                                                if (e.getMessage() != null && e.getMessage().contains("duplicate key")) {
+                                                    logger.warn("⚠️ Duplicate translation detected, fetching existing: messageId={}, lang={}", 
+                                                            messageId, targetLanguage);
+                                                    return messageTranslationRepository
+                                                            .findByMessageIdAndLanguage(messageId, targetLanguage)
+                                                            .map(MessageTranslation::getContent)
+                                                            .orElse(translatedContent); // 못 찾으면 방금 번역한 것 반환
+                                                }
+                                                throw e;
+                                            }
                                         })
                                         .subscribeOn(Schedulers.boundedElastic());
                             });
